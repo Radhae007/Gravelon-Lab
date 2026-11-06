@@ -1,5 +1,5 @@
 """
-Project Vajra-Net | MoD Tender Win-Probability Calculator
+Project Business Analytics Tender Success Dashboard | MoD Tender Win-Probability Calculator
 BADM Defense Project: Netra-Helmet and Vajra-K9
 
 Run with:
@@ -18,7 +18,7 @@ from sklearn.preprocessing import StandardScaler
 # Page setup
 # ------------------------------------------------------------------
 st.set_page_config(
-    page_title="Government Tender Success Rate",
+    page_title="Business Analytics Tender Success Dashboard",
     page_icon="🛡️",
     layout="wide",
 )
@@ -132,12 +132,12 @@ trial = st.sidebar.slider(
 )
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Project Vajra-Net · Netra-Helmet & Vajra-K9")
+st.sidebar.caption("Business Analytics Tender Success Dashboard · Netra-Helmet & Vajra-K9")
 
 # ------------------------------------------------------------------
 # Main panel
 # ------------------------------------------------------------------
-st.title("🛡️ Project Vajra-Net")
+st.title("🛡️ Business Analytics Tender Success Dashboard")
 st.markdown("##### Ministry of Defence Tender Win-Probability Calculator")
 st.markdown(
     '<span class="muted">Logistic regression model trained on indigenous Indian '
@@ -230,16 +230,4 @@ st.dataframe(
     hide_index=True,
     column_config={
         "Unit Price (₹ Lakhs)": st.column_config.NumberColumn(format="₹ %d L"),
-        "MoD Budget (₹ Crores)": st.column_config.NumberColumn(format="₹ %d Cr"),
-        "Trial Score (%)": st.column_config.ProgressColumn(
-            min_value=0, max_value=100, format="%d%%"
-        ),
-    },
-)
-
-st.download_button(
-    "Download dataset (CSV)",
-    data=df.to_csv(index=False).encode("utf-8"),
-    file_name="vajra_net_benchmark_dataset.csv",
-    mime="text/csv",
-)
+        "MoD Budget
