@@ -18,7 +18,7 @@ from sklearn.preprocessing import StandardScaler
 # Page setup
 # ------------------------------------------------------------------
 st.set_page_config(
-    page_title="Vajra-Net | Tender Win-Probability",
+    page_title="Government Tender Success Rate",
     page_icon="🛡️",
     layout="wide",
 )
