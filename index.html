@@ -3,22 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EagleEye XR | Himalayan Tactical Situational Awareness Simulator</title>
+  <title>EagleEye XR | Anduril Lattice Tactical Combat AR Visor Simulator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Share+Tech+Mono&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <!-- Three.js 3D Engine -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Share+Tech+Mono&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Three.js r128 3D Engine -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     :root {
       --primary: #00f0ff;
-      --primary-dim: rgba(0, 240, 255, 0.25);
+      --primary-dim: rgba(0, 240, 255, 0.22);
+      --primary-glow: rgba(0, 240, 255, 0.45);
       --hostile: #ff2a4b;
-      --hostile-glow: rgba(255, 42, 75, 0.4);
+      --hostile-glow: rgba(255, 42, 75, 0.45);
       --friendly: #00ffa3;
-      --friendly-glow: rgba(0, 255, 163, 0.3);
+      --friendly-glow: rgba(0, 255, 163, 0.35);
       --warning: #ffb800;
-      --bg-dark: #04080d;
+      --waypoint: #ffd000;
+      --bg-dark: #03070b;
       --hud-font: 'Share Tech Mono', monospace;
       --ui-font: 'Orbitron', sans-serif;
     }
@@ -42,15 +44,17 @@
       flex-direction: column;
     }
 
-    /* Top Global Header */
+    /* ===================================================
+       TOP GLOBAL TACTICAL COMMAND BAR
+       =================================================== */
     header {
-      height: 52px;
-      background: linear-gradient(180deg, rgba(8, 16, 26, 0.95) 0%, rgba(5, 11, 18, 0.85) 100%);
+      height: 48px;
+      background: linear-gradient(180deg, rgba(6, 13, 22, 0.96) 0%, rgba(4, 9, 15, 0.88) 100%);
       border-bottom: 1px solid rgba(0, 240, 255, 0.25);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 24px;
+      padding: 0 20px;
       z-index: 100;
       backdrop-filter: blur(10px);
     }
@@ -58,32 +62,32 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .brand-logo {
-      width: 28px;
-      height: 28px;
-      background: conic-gradient(from 45deg, #00f0ff, #0077ff, #00f0ff);
+      width: 24px;
+      height: 24px;
+      background: conic-gradient(from 45deg, #00f0ff, #0066ff, #00f0ff);
       clip-path: polygon(50% 0%, 100% 35%, 82% 100%, 18% 100%, 0% 35%);
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.6);
-      animation: logoPulse 4s infinite alternate ease-in-out;
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+      animation: logoPulse 3.5s infinite alternate ease-in-out;
     }
 
     @keyframes logoPulse {
-      0% { filter: drop-shadow(0 0 4px #00f0ff); transform: scale(0.96); }
-      100% { filter: drop-shadow(0 0 12px #00f0ff); transform: scale(1.04); }
+      0% { filter: drop-shadow(0 0 3px #00f0ff); transform: scale(0.96); }
+      100% { filter: drop-shadow(0 0 10px #00f0ff); transform: scale(1.04); }
     }
 
     .brand-title {
       font-family: var(--ui-font);
-      font-size: 17px;
+      font-size: 15px;
       font-weight: 800;
       letter-spacing: 2px;
       color: #fff;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .brand-title span {
@@ -95,18 +99,46 @@
       font-size: 10px;
       padding: 2px 7px;
       background: rgba(0, 240, 255, 0.12);
-      border: 1px solid rgba(0, 240, 255, 0.4);
+      border: 1px solid rgba(0, 240, 255, 0.35);
       border-radius: 3px;
       color: var(--primary);
       letter-spacing: 1px;
     }
 
+    .hotkey-strip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      color: #7ea8be;
+    }
+
+    .hotkey-pill {
+      background: rgba(0, 240, 255, 0.06);
+      border: 1px solid rgba(0, 240, 255, 0.18);
+      padding: 2px 7px;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .hotkey-pill kbd {
+      color: #fff;
+      font-family: var(--hud-font);
+      font-weight: bold;
+      background: rgba(0, 240, 255, 0.2);
+      padding: 0 4px;
+      border-radius: 2px;
+      font-size: 9px;
+    }
+
     .mission-status {
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 18px;
       font-size: 11px;
-      letter-spacing: 1.5px;
+      letter-spacing: 1.2px;
     }
 
     .stat-badge {
@@ -134,18 +166,19 @@
       50% { opacity: 0.3; }
     }
 
-    /* Main POV Screen Area */
+    /* ===================================================
+       MAIN POV VIEWPORT & CANVASES
+       =================================================== */
     #pov-container {
       position: relative;
       flex: 1;
       width: 100%;
-      height: calc(100vh - 128px);
+      height: calc(100vh - 118px);
       overflow: hidden;
       background: #010204;
-      cursor: crosshair;
+      cursor: none; /* Custom smart ballistic reticle handles cursor */
     }
 
-    /* WebGL 3D Canvas */
     #three-canvas {
       position: absolute;
       top: 0;
@@ -155,7 +188,6 @@
       z-index: 1;
     }
 
-    /* 2D HUD Canvas for tactical overlays */
     #hud-canvas {
       position: absolute;
       top: 0;
@@ -174,28 +206,28 @@
       inset: 0;
       z-index: 8;
       pointer-events: none;
-      transition: opacity 0.5s ease;
+      transition: opacity 0.4s ease;
       display: block;
     }
 
     .pitch-black-vignette {
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at 50% 50%, rgba(3, 8, 14, 0.45) 0%, rgba(2, 4, 7, 0.92) 50%, rgba(1, 2, 4, 0.99) 85%);
-      box-shadow: inset 0 0 150px rgba(0, 0, 0, 0.98);
+      background: radial-gradient(circle at 50% 50%, rgba(2, 6, 12, 0.55) 0%, rgba(1, 3, 6, 0.94) 48%, rgba(0, 1, 2, 0.99) 85%);
+      box-shadow: inset 0 0 160px rgba(0, 0, 0, 0.99);
     }
 
     .panic-heartbeat-border {
       position: absolute;
       inset: 0;
-      box-shadow: inset 0 0 180px rgba(255, 30, 60, 0.45);
-      animation: pulsePanic 1.2s infinite ease-in-out;
+      box-shadow: inset 0 0 160px rgba(255, 25, 55, 0.42);
+      animation: pulsePanic 1.1s infinite ease-in-out;
     }
 
     @keyframes pulsePanic {
-      0% { opacity: 0.2; transform: scale(1); }
-      50% { opacity: 0.85; transform: scale(1.015); }
-      100% { opacity: 0.2; transform: scale(1); }
+      0% { opacity: 0.18; transform: scale(1); }
+      45% { opacity: 0.85; transform: scale(1.01); }
+      100% { opacity: 0.18; transform: scale(1); }
     }
 
     .frost-breath {
@@ -203,59 +235,52 @@
       bottom: 0;
       left: 0;
       width: 100%;
-      height: 35%;
-      background: radial-gradient(ellipse at 50% 120%, rgba(200, 230, 255, 0.12) 0%, transparent 70%);
-      filter: blur(12px);
-      animation: breathe 4s infinite ease-in-out;
+      height: 36%;
+      background: radial-gradient(ellipse at 50% 120%, rgba(190, 225, 255, 0.13) 0%, transparent 70%);
+      filter: blur(14px);
+      animation: breathe 3.8s infinite ease-in-out;
     }
 
     @keyframes breathe {
-      0%, 100% { opacity: 0.2; transform: translateY(0); }
-      50% { opacity: 0.65; transform: translateY(-15px); }
+      0%, 100% { opacity: 0.15; transform: translateY(0); }
+      50% { opacity: 0.65; transform: translateY(-18px); }
     }
 
     .panic-warning-card {
       position: absolute;
-      bottom: 30px;
-      left: 30px;
-      background: rgba(18, 5, 8, 0.85);
-      border: 1px solid rgba(255, 42, 75, 0.6);
-      padding: 16px 22px;
+      bottom: 26px;
+      left: 26px;
+      background: rgba(16, 4, 7, 0.88);
+      border: 1px solid rgba(255, 42, 75, 0.65);
+      border-left: 4px solid var(--hostile);
+      padding: 14px 20px;
       border-radius: 4px;
-      box-shadow: 0 0 25px rgba(255, 42, 75, 0.3);
+      box-shadow: 0 0 25px rgba(255, 42, 75, 0.25);
       color: #ff556b;
-      max-width: 480px;
-      animation: alertFlicker 2.5s infinite;
+      max-width: 460px;
+      backdrop-filter: blur(6px);
     }
 
     .panic-warning-card h3 {
       font-family: var(--ui-font);
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 800;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 6px;
       color: #ff334f;
+      letter-spacing: 1px;
     }
 
     .panic-warning-card p {
       font-size: 11px;
-      line-height: 1.5;
-      color: #f7a8b4;
-    }
-
-    @keyframes alertFlicker {
-      0%, 100% { opacity: 1; }
-      82% { opacity: 0.95; }
-      84% { opacity: 0.5; }
-      86% { opacity: 0.98; }
-      92% { opacity: 0.3; }
-      94% { opacity: 1; }
+      line-height: 1.45;
+      color: #f2b6c0;
     }
 
     /* ===================================================
-       PHASE 2: EAGLEEYE / NETRA-X AR VISOR HUD
+       PHASE 2: EAGLEEYE / LATTICE AR VISOR HUD
        =================================================== */
     #eagleeye-hud-overlay {
       position: absolute;
@@ -264,43 +289,45 @@
       pointer-events: none;
       display: none;
       opacity: 0;
-      transition: opacity 0.4s ease;
+      transition: opacity 0.35s ease;
     }
 
-    /* Curved Visor Edge & Sensor Glass Vignette */
+    /* Visor Rim & Subtle Sensor Scanline */
     .visor-rim {
       position: absolute;
       inset: 0;
-      border: 2px solid rgba(0, 240, 255, 0.15);
-      border-radius: 30px;
-      box-shadow: inset 0 0 80px rgba(0, 240, 255, 0.08), inset 0 0 150px rgba(0, 15, 25, 0.8);
+      border: 1.5px solid rgba(0, 240, 255, 0.14);
+      border-radius: 24px;
+      box-shadow: inset 0 0 70px rgba(0, 240, 255, 0.06), inset 0 0 130px rgba(0, 10, 18, 0.75);
       pointer-events: none;
     }
 
-    .visor-grid-scan {
+    /* Optical Zoom Scope Mask when 2X or 4X is active */
+    #optic-zoom-vignette {
       position: absolute;
       inset: 0;
-      background: linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-      opacity: 0.6;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      background: radial-gradient(circle at 50% 50%, transparent 38%, rgba(0, 8, 14, 0.55) 55%, rgba(0, 4, 8, 0.92) 78%);
     }
 
-    /* Horizon Compass Bar */
+    /* Top Minimalist Compass Tape (Always visible in FULL & MINIMAL) */
     .top-compass-bar {
       position: absolute;
-      top: 15px;
+      top: 12px;
       left: 50%;
       transform: translateX(-50%);
-      width: 480px;
-      height: 40px;
-      border-bottom: 1px solid rgba(0, 240, 255, 0.4);
+      width: 440px;
+      height: 36px;
+      border-bottom: 1px solid rgba(0, 240, 255, 0.35);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(180deg, rgba(0, 30, 40, 0.4) 0%, transparent 100%);
-      text-shadow: 0 0 8px var(--primary);
+      background: linear-gradient(180deg, rgba(0, 22, 32, 0.45) 0%, transparent 100%);
+      text-shadow: 0 0 6px var(--primary);
+      transition: opacity 0.25s ease;
     }
 
     .compass-ticks {
@@ -308,36 +335,44 @@
       justify-content: space-between;
       width: 100%;
       font-size: 10px;
-      color: rgba(0, 240, 255, 0.7);
-      padding: 0 8px;
+      color: rgba(0, 240, 255, 0.75);
+      padding: 0 10px;
     }
 
     .compass-center-indicator {
       width: 2px;
-      height: 10px;
-      background: #ffb800;
-      box-shadow: 0 0 8px #ffb800;
+      height: 8px;
+      background: var(--warning);
+      box-shadow: 0 0 6px var(--warning);
       margin-top: 2px;
     }
 
     .compass-heading-text {
       font-family: var(--ui-font);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       color: #fff;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
     }
 
-    /* Top Left Telemetry */
+    /* Top-Left Compact Lattice C2 Telemetry (Hidden in COMBAT MINIMAL / OPTIC ONLY) */
+    .hud-peripheral-panel {
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
     .hud-telemetry-left {
       position: absolute;
-      top: 20px;
-      left: 28px;
+      top: 16px;
+      left: 22px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      font-size: 11px;
-      text-shadow: 0 0 8px var(--primary);
+      gap: 4px;
+      font-size: 10.5px;
+      background: rgba(2, 12, 20, 0.55);
+      border-left: 2px solid var(--primary);
+      padding: 8px 12px;
+      border-radius: 0 4px 4px 0;
+      backdrop-filter: blur(4px);
     }
 
     .telem-row {
@@ -347,8 +382,8 @@
     }
 
     .telem-label {
-      color: rgba(0, 240, 255, 0.6);
-      width: 90px;
+      color: rgba(0, 240, 255, 0.65);
+      width: 78px;
     }
 
     .telem-val {
@@ -358,20 +393,20 @@
 
     .telem-val.green {
       color: var(--friendly);
-      text-shadow: 0 0 8px var(--friendly);
+      text-shadow: 0 0 6px var(--friendly);
     }
 
-    /* Top Right Minimap & Radar */
+    /* Top-Right Circular Tactical Radar (150px, anti-clutter sizing) */
     .minimap-container {
       position: absolute;
-      top: 20px;
-      right: 28px;
-      width: 180px;
-      height: 180px;
-      background: radial-gradient(circle, rgba(0, 20, 30, 0.85) 0%, rgba(2, 10, 18, 0.95) 100%);
-      border: 1px solid rgba(0, 240, 255, 0.5);
+      top: 16px;
+      right: 22px;
+      width: 154px;
+      height: 154px;
+      background: radial-gradient(circle, rgba(0, 22, 34, 0.78) 0%, rgba(2, 10, 18, 0.9) 100%);
+      border: 1px solid rgba(0, 240, 255, 0.45);
       border-radius: 50%;
-      box-shadow: 0 0 25px rgba(0, 240, 255, 0.25), inset 0 0 25px rgba(0, 240, 255, 0.15);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.18), inset 0 0 20px rgba(0, 240, 255, 0.12);
       overflow: hidden;
       pointer-events: auto;
     }
@@ -380,8 +415,8 @@
       position: absolute;
       inset: 0;
       border-radius: 50%;
-      background: conic-gradient(from 0deg, rgba(0, 240, 255, 0.45) 0deg, rgba(0, 240, 255, 0.05) 60deg, transparent 90deg);
-      animation: radarRotate 3.5s linear infinite;
+      background: conic-gradient(from 0deg, rgba(0, 240, 255, 0.35) 0deg, rgba(0, 240, 255, 0.04) 55deg, transparent 90deg);
+      animation: radarRotate 3.2s linear infinite;
     }
 
     @keyframes radarRotate {
@@ -393,7 +428,7 @@
       position: absolute;
       inset: 0;
       border-radius: 50%;
-      border: 1px dashed rgba(0, 240, 255, 0.25);
+      border: 1px dashed rgba(0, 240, 255, 0.22);
     }
 
     .minimap-rings::before {
@@ -404,7 +439,20 @@
       width: 50%;
       height: 50%;
       border-radius: 50%;
-      border: 1px dashed rgba(0, 240, 255, 0.35);
+      border: 1px dashed rgba(0, 240, 255, 0.28);
+    }
+
+    /* FOV Cone on Minimap */
+    #minimap-fov-cone {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 140px;
+      height: 140px;
+      transform: translate(-50%, -50%);
+      background: conic-gradient(from -32deg, rgba(0, 240, 255, 0.18) 0deg, rgba(0, 240, 255, 0.18) 64deg, transparent 65deg);
+      border-radius: 50%;
+      pointer-events: none;
     }
 
     .minimap-crosshair {
@@ -413,76 +461,78 @@
       left: 0;
       right: 0;
       height: 1px;
-      background: rgba(0, 240, 255, 0.25);
+      background: rgba(0, 240, 255, 0.2);
     }
 
     .minimap-crosshair::after {
       content: '';
       position: absolute;
-      top: -90px;
-      bottom: -90px;
+      top: -77px;
+      bottom: -77px;
       left: 50%;
       width: 1px;
-      background: rgba(0, 240, 255, 0.25);
+      background: rgba(0, 240, 255, 0.2);
     }
 
     .minimap-blip {
       position: absolute;
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       transform: translate(-50%, -50%);
-      transition: all 0.3s ease;
+      transition: opacity 0.2s ease;
     }
 
     .minimap-blip.player {
       top: 50%;
       left: 50%;
       background: #fff;
-      box-shadow: 0 0 10px #fff;
-      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-      width: 10px;
-      height: 10px;
+      box-shadow: 0 0 8px #fff;
+      width: 8px;
+      height: 8px;
+      z-index: 3;
     }
 
     .minimap-blip.hostile {
       background: var(--hostile);
-      box-shadow: 0 0 8px var(--hostile);
-      animation: blipPulse 1.5s infinite alternate;
+      box-shadow: 0 0 7px var(--hostile);
+      border-radius: 1px;
+      transform: translate(-50%, -50%) rotate(45deg);
     }
 
     .minimap-blip.friendly {
       background: var(--friendly);
-      box-shadow: 0 0 8px var(--friendly);
+      box-shadow: 0 0 7px var(--friendly);
     }
 
-    @keyframes blipPulse {
-      0% { transform: translate(-50%, -50%) scale(0.9); }
-      100% { transform: translate(-50%, -50%) scale(1.4); }
+    .minimap-blip.waypoint {
+      background: var(--waypoint);
+      box-shadow: 0 0 8px var(--waypoint);
+      width: 6px;
+      height: 6px;
     }
 
     .minimap-tag {
       position: absolute;
-      bottom: 6px;
+      bottom: 5px;
       width: 100%;
       text-align: center;
-      font-size: 9px;
-      color: rgba(0, 240, 255, 0.8);
+      font-size: 8.5px;
+      color: rgba(0, 240, 255, 0.85);
       letter-spacing: 1px;
-      text-shadow: 0 0 5px var(--primary);
     }
 
-    /* Secondary Overhead Drone PIP Feed */
+    /* Ghost-4 UAV Overwatch Picture-in-Picture (Interactive) */
     .drone-pip-box {
       position: absolute;
-      bottom: 25px;
-      right: 28px;
-      width: 210px;
-      height: 135px;
+      bottom: 20px;
+      right: 22px;
+      width: 224px;
+      height: 144px;
       background: #02070d;
-      border: 1px solid rgba(0, 240, 255, 0.4);
+      border: 1px solid rgba(0, 240, 255, 0.45);
       border-radius: 4px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.75);
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -490,8 +540,8 @@
     }
 
     .drone-pip-header {
-      height: 22px;
-      background: rgba(0, 35, 50, 0.8);
+      height: 24px;
+      background: rgba(0, 32, 48, 0.88);
       border-bottom: 1px solid rgba(0, 240, 255, 0.3);
       display: flex;
       align-items: center;
@@ -499,232 +549,193 @@
       padding: 0 8px;
       font-size: 9px;
       color: var(--primary);
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
+    }
+
+    .uav-cam-btn {
+      background: rgba(0, 240, 255, 0.16);
+      border: 1px solid rgba(0, 240, 255, 0.45);
+      color: #fff;
+      font-family: var(--hud-font);
+      font-size: 8.5px;
+      padding: 1px 5px;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    .uav-cam-btn:hover {
+      background: var(--primary);
+      color: #000;
+    }
+
+    .drone-pip-viewport {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      height: 120px;
     }
 
     #drone-canvas {
       width: 100%;
-      height: calc(100% - 22px);
-      background: #020608;
+      height: 100%;
+      display: block;
     }
 
-    /* Target Tags / AR Overlays on Screen */
-    .target-overlay-card {
+    .drone-hud-overlay {
       position: absolute;
-      padding: 6px 10px;
-      border-radius: 3px;
-      font-size: 10px;
-      pointer-events: auto;
-      transform: translate(-50%, -120%);
-      transition: transform 0.15s, opacity 0.2s;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    .target-overlay-card.hostile {
-      background: rgba(20, 2, 6, 0.82);
-      border: 1px solid var(--hostile);
-      color: #ffadb8;
-      box-shadow: 0 0 15px var(--hostile-glow);
-    }
-
-    .target-overlay-card.hostile .target-header {
-      font-family: var(--ui-font);
-      font-weight: 800;
-      color: var(--hostile);
-      font-size: 11px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .target-overlay-card.friendly {
-      background: rgba(0, 20, 15, 0.82);
-      border: 1px solid var(--friendly);
-      color: #a4fbd3;
-      box-shadow: 0 0 15px var(--friendly-glow);
-    }
-
-    .target-overlay-card.friendly .target-header {
-      font-family: var(--ui-font);
-      font-weight: 800;
-      color: var(--friendly);
-      font-size: 11px;
-    }
-
-    /* Smart Central Reticle & Ballistics */
-    .smart-crosshair {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 70px;
-      height: 70px;
+      inset: 0;
       pointer-events: none;
-      transition: all 0.15s ease-out;
+      border: 1px solid rgba(0, 255, 163, 0.15);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 4px 6px;
+      font-size: 8.5px;
+      color: rgba(0, 255, 163, 0.9);
+      text-shadow: 0 0 4px #000;
     }
 
-    .smart-crosshair-ring {
-      position: absolute;
-      inset: 0;
-      border: 1px dashed rgba(255, 184, 0, 0.7);
-      border-radius: 50%;
-      animation: spinCrosshair 20s linear infinite;
-    }
-
-    @keyframes spinCrosshair {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    .smart-crosshair-center {
+    .drone-crosshair {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 4px;
-      height: 4px;
-      background: #ffb800;
-      border-radius: 50%;
+      width: 24px;
+      height: 24px;
       transform: translate(-50%, -50%);
-      box-shadow: 0 0 8px #ffb800;
+      border: 1px dashed rgba(0, 255, 163, 0.6);
+      border-radius: 50%;
     }
 
-    .smart-crosshair-bars {
-      position: absolute;
-      inset: 0;
-    }
-
-    .smart-crosshair-bars::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: -12px;
-      width: 14px;
-      height: 1px;
-      background: #ffb800;
-    }
-
-    .smart-crosshair-bars::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      right: -12px;
-      width: 14px;
-      height: 1px;
-      background: #ffb800;
-    }
-
-    .ballistics-readout {
-      position: absolute;
-      top: 50%;
-      left: calc(50% + 45px);
-      transform: translateY(-50%);
-      font-size: 10px;
-      color: #ffb800;
-      text-shadow: 0 0 6px rgba(255, 184, 0, 0.6);
-      line-height: 1.4;
-      white-space: nowrap;
-    }
-
-    /* Weapon status bottom-left */
+    /* Weapon, Optic Zoom & Declutter Status Bottom-Left */
     .hud-weapon-status {
       position: absolute;
-      bottom: 25px;
-      left: 28px;
-      background: rgba(0, 15, 25, 0.7);
-      border: 1px solid rgba(0, 240, 255, 0.3);
-      padding: 10px 16px;
+      bottom: 20px;
+      left: 22px;
+      background: rgba(2, 12, 20, 0.72);
+      border: 1px solid rgba(0, 240, 255, 0.32);
+      border-left: 3px solid var(--primary);
+      padding: 9px 14px;
       border-radius: 4px;
       font-size: 11px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 5px;
+      pointer-events: auto;
+      backdrop-filter: blur(4px);
+    }
+
+    .zoom-selector-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .zoom-pill {
+      font-family: var(--hud-font);
+      font-size: 9.5px;
+      padding: 2px 7px;
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      background: rgba(0, 20, 30, 0.6);
+      color: #8bbacf;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    .zoom-pill.active {
+      background: var(--primary);
+      color: #000;
+      font-weight: bold;
+      border-color: var(--primary);
     }
 
     /* ===================================================
        BOTTOM TACTICAL CONTROL BAR & MODE SWITCHER
        =================================================== */
     footer {
-      height: 76px;
-      background: #060b12;
+      height: 70px;
+      background: #050a10;
       border-top: 1px solid rgba(0, 240, 255, 0.25);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 24px;
+      padding: 0 20px;
       z-index: 100;
-      gap: 16px;
+      gap: 12px;
     }
 
     .master-switch-container {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .btn-master-toggle {
       font-family: var(--ui-font);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
-      letter-spacing: 1.5px;
-      padding: 12px 22px;
+      letter-spacing: 1.2px;
+      padding: 10px 18px;
       border: 1px solid var(--primary);
-      background: linear-gradient(135deg, rgba(0, 240, 255, 0.2) 0%, rgba(0, 100, 180, 0.3) 100%);
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.22) 0%, rgba(0, 100, 180, 0.32) 100%);
       color: #fff;
-      border-radius: 5px;
+      border-radius: 4px;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 10px;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 18px rgba(0, 240, 255, 0.22);
+      white-space: nowrap;
     }
 
     .btn-master-toggle:hover {
       background: var(--primary);
       color: #000;
-      box-shadow: 0 0 30px rgba(0, 240, 255, 0.8);
-      transform: translateY(-2px);
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.75);
     }
 
     .btn-master-toggle.active {
-      border-color: #00ffa3;
-      background: linear-gradient(135deg, rgba(0, 255, 163, 0.25) 0%, rgba(0, 140, 90, 0.35) 100%);
-      box-shadow: 0 0 25px rgba(0, 255, 163, 0.4);
+      border-color: var(--friendly);
+      background: linear-gradient(135deg, rgba(0, 255, 163, 0.22) 0%, rgba(0, 140, 90, 0.32) 100%);
+      box-shadow: 0 0 20px rgba(0, 255, 163, 0.32);
     }
 
     .vision-modes-group {
       display: flex;
       align-items: center;
-      gap: 8px;
-      background: rgba(0, 20, 30, 0.6);
-      padding: 5px 8px;
-      border-radius: 6px;
-      border: 1px solid rgba(0, 240, 255, 0.2);
+      gap: 6px;
+      background: rgba(0, 18, 28, 0.65);
+      padding: 4px 8px;
+      border-radius: 5px;
+      border: 1px solid rgba(0, 240, 255, 0.18);
+      overflow-x: auto;
     }
 
     .mode-label {
-      font-size: 10px;
+      font-size: 9.5px;
       color: rgba(0, 240, 255, 0.7);
-      margin-right: 4px;
+      margin-right: 2px;
       letter-spacing: 1px;
+      white-space: nowrap;
     }
 
     .mode-btn {
       font-family: var(--hud-font);
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 600;
-      letter-spacing: 0.8px;
-      padding: 8px 12px;
+      letter-spacing: 0.5px;
+      padding: 7px 10px;
       background: transparent;
-      border: 1px solid rgba(0, 240, 255, 0.2);
+      border: 1px solid rgba(0, 240, 255, 0.18);
       color: #8bbacf;
-      border-radius: 4px;
+      border-radius: 3px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.18s ease;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
+      white-space: nowrap;
     }
 
     .mode-btn:hover {
@@ -737,7 +748,7 @@
       background: rgba(0, 240, 255, 0.22);
       border-color: var(--primary);
       color: #fff;
-      box-shadow: 0 0 14px rgba(0, 240, 255, 0.4);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
       font-weight: 700;
     }
 
@@ -748,60 +759,74 @@
       background: currentColor;
     }
 
-    /* Extra Toggles */
     .aux-controls {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
     }
 
     .aux-btn {
       font-family: var(--hud-font);
       font-size: 10px;
-      padding: 6px 10px;
-      background: rgba(10, 20, 30, 0.7);
-      border: 1px solid rgba(0, 240, 255, 0.2);
-      color: #7aa5b9;
-      border-radius: 4px;
+      padding: 7px 10px;
+      background: rgba(8, 18, 28, 0.78);
+      border: 1px solid rgba(0, 240, 255, 0.22);
+      color: #89b4c9;
+      border-radius: 3px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.18s;
+      white-space: nowrap;
     }
 
-    .aux-btn:hover, .aux-btn.active {
+    .aux-btn:hover {
       border-color: var(--primary);
       color: #fff;
+      background: rgba(0, 240, 255, 0.12);
     }
 
-    /* Engagement action modal / banner */
+    .aux-btn.active {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(0, 240, 255, 0.14);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+    }
+
+    .aux-btn.warn {
+      border-color: rgba(255, 184, 0, 0.45);
+      color: var(--warning);
+    }
+
+    .aux-btn.warn:hover {
+      background: rgba(255, 184, 0, 0.18);
+      color: #fff;
+    }
+
+    /* Compact Tactical Toast Banner */
     #engagement-banner {
       position: absolute;
-      top: 75px;
+      top: 56px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(20, 2, 4, 0.9);
-      border: 1px solid var(--hostile);
-      padding: 8px 18px;
-      border-radius: 4px;
+      background: rgba(8, 18, 26, 0.9);
+      border: 1px solid var(--primary);
+      border-left: 3px solid var(--primary);
+      padding: 6px 16px;
+      border-radius: 3px;
       color: #fff;
       font-family: var(--ui-font);
-      font-size: 12px;
-      letter-spacing: 1px;
-      z-index: 15;
+      font-size: 11px;
+      letter-spacing: 1.2px;
+      z-index: 25;
       display: none;
-      box-shadow: 0 0 20px rgba(255, 42, 75, 0.5);
-      animation: alertPulse 0.5s alternate infinite;
+      pointer-events: none;
+      box-shadow: 0 0 18px rgba(0, 240, 255, 0.35);
     }
 
-    @keyframes alertPulse {
-      0% { transform: translateX(-50%) scale(0.98); }
-      100% { transform: translateX(-50%) scale(1.02); }
-    }
-
-    /* Transitions & Boot sequence animation */
+    /* Boot Sequence Overlay */
     #boot-sequence-overlay {
       position: absolute;
       inset: 0;
-      background: #000;
+      background: #010408;
       z-index: 50;
       display: flex;
       flex-direction: column;
@@ -809,189 +834,214 @@
       justify-content: center;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.2s ease;
+      transition: opacity 0.22s ease;
+    }
+
+    @keyframes spinReticle {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
     .boot-text {
       font-family: var(--hud-font);
       color: var(--primary);
-      font-size: 14px;
+      font-size: 13px;
       letter-spacing: 2px;
-      margin-top: 15px;
+      margin-top: 14px;
       text-shadow: 0 0 10px var(--primary);
     }
   </style>
 </head>
 <body>
 
-  <!-- Top System Bar -->
+  <!-- Top System Command Header -->
   <header>
     <div class="brand">
       <div class="brand-logo"></div>
-      <div class="brand-title">EAGLE<span>EYE</span> <span style="font-size: 12px; font-weight: 400; opacity: 0.8;">XR</span></div>
-      <div class="brand-tag">LATTICE SENSOR FUSION</div>
+      <div class="brand-title">EAGLE<span>EYE</span> <span style="font-size: 11px; font-weight: 500; opacity: 0.8;">XR</span></div>
+      <div class="brand-tag">LATTICE OS v6.4</div>
+    </div>
+
+    <!-- Operator Combat Hotkeys Reference -->
+    <div class="hotkey-strip">
+      <div class="hotkey-pill"><kbd>LMB</kbd> FIRE</div>
+      <div class="hotkey-pill"><kbd>RMB</kbd>/<kbd>G</kbd> DESIGNATE / WAYPOINT</div>
+      <div class="hotkey-pill"><kbd>SCROLL</kbd> 1X-4X ZOOM</div>
+      <div class="hotkey-pill"><kbd>V</kbd> TERRAIN PULSE</div>
+      <div class="hotkey-pill"><kbd>H</kbd> DECLUTTER HUD</div>
+      <div class="hotkey-pill"><kbd>R</kbd> RELOAD</div>
     </div>
 
     <div class="mission-status">
       <div class="stat-badge">
         <span class="stat-dot danger" id="threat-indicator"></span>
-        <span id="threat-text">HOSTILE PLA SQUAD DETECTED (3 CONTACTS)</span>
+        <span id="threat-text">CONTACTS: 3 HOSTILE PLA</span>
       </div>
       <div class="stat-badge">
         <span class="stat-dot"></span>
-        <span>HIMALAYAN SECTOR 7G [16,420 FT]</span>
+        <span>SECTOR 7G [16,420 FT]</span>
       </div>
       <div class="stat-badge">
-        <span style="color: #ffb800;">-24°C │ BLIZZARD</span>
+        <span style="color: #ffb800;">-24°C │ 9KN NW</span>
       </div>
     </div>
   </header>
 
-  <!-- Main Viewport Area -->
+  <!-- Main Soldier POV Combat Viewport -->
   <div id="pov-container">
-    <!-- 3D Three.js Render Target -->
+    <!-- 3D WebGL Scene Canvas -->
     <canvas id="three-canvas"></canvas>
 
-    <!-- 2D Canvas for High-Speed Dynamic HUD Drawing (tracers, bounding boxes, skeletal AI) -->
+    <!-- 2D High-Speed Anti-Clutter Tactical HUD Canvas -->
     <canvas id="hud-canvas"></canvas>
 
-    <!-- Boot Sequence Flash Screen -->
+    <!-- Optical Scope Vignette (Appears in 2X / 4X Magnification) -->
+    <div id="optic-zoom-vignette"></div>
+
+    <!-- Helmet Boot Sequence Transition -->
     <div id="boot-sequence-overlay">
-      <div style="width: 60px; height: 60px; border: 3px solid var(--primary); border-top-color: transparent; border-radius: 50%; animation: spinCrosshair 0.6s linear infinite;"></div>
+      <div style="width: 54px; height: 54px; border: 2.5px solid var(--primary); border-top-color: transparent; border-radius: 50%; animation: spinReticle 0.55s linear infinite;"></div>
       <div class="boot-text" id="boot-text">INITIALIZING EAGLEEYE MULTI-SPECTRAL VISOR...</div>
     </div>
 
-    <!-- Active Engagement Banner -->
-    <div id="engagement-banner">
-      ⚠ TARGET LOCKED: HOSTILE PLA PATROL [RANGE: 78m] — PRESS LEFT-CLICK TO FIRE
-    </div>
+    <!-- Compact Tactical Toast Banner -->
+    <div id="engagement-banner">LATTICE C2 LINK ACTIVE</div>
 
-    <!-- Phase 1: Naked Eye / Blind Ambush Overlay -->
+    <!-- PHASE 1: Unprotected Naked Eye POV Overlay -->
     <div id="naked-eye-overlay">
       <div class="pitch-black-vignette"></div>
       <div class="panic-heartbeat-border"></div>
       <div class="frost-breath"></div>
-      
+
       <div class="panic-warning-card">
         <h3>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
             <line x1="12" y1="9" x2="12" y2="13"></line>
             <line x1="12" y1="17" x2="12.01" y2="17"></line>
           </svg>
-          SENSORY COLLAPSE: UNPROTECTED NAKED EYE POV
+          UNPROTECTED NAKED-EYE POV (ZERO SITUATIONAL AWARENESS)
         </h3>
         <p>
-          Pitch dark Himalayan pine forest at -24°C in howling blizzard. Chinese PLA border patrol is flanking through tree cover with thermal cloaks. 
-          Visibility is less than 5 meters. Heartrate spiking at 155 BPM.
+          Sub-zero Himalayan blizzard (-24°C). Hostile PLA recon squad is flanking through pine cover with thermal-damping cloaks and laser designators. Naked-eye visibility &lt; 5m.
         </p>
-        <div style="margin-top: 10px; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 8px;">
-          <span style="color: #00f0ff;">👉 CLICK "EQUIP EAGLEEYE HELMET" BELOW TO ACTIVATE AR VISION</span>
+        <div style="margin-top: 8px; font-weight: bold; color: #fff; font-size: 11px;">
+          <span style="color: var(--primary);">► CLICK ANYWHERE OR PRESS [SPACE] TO EQUIP EAGLEEYE HELMET</span>
         </div>
       </div>
     </div>
 
-    <!-- Phase 2: High-Tech AR EagleEye HUD -->
+    <!-- PHASE 2: Anduril EagleEye AR Visor HUD -->
     <div id="eagleeye-hud-overlay">
       <div class="visor-rim"></div>
-      <div class="visor-grid-scan"></div>
 
-      <!-- Top Compass Strip -->
-      <div class="top-compass-bar">
-        <div class="compass-heading-text" id="heading-display">342° NNW │ GRID 43R-EP</div>
+      <!-- Top Compass Bar -->
+      <div class="top-compass-bar" id="hud-compass">
+        <div class="compass-heading-text" id="heading-display">342° NNW │ MGRS 43R EP 8842 1920</div>
         <div class="compass-ticks">
-          <span>315° NW</span>
+          <span>300°</span>
           <span>330°</span>
           <span>345° NNW</span>
           <span style="color: #fff; font-weight: bold;">000° N</span>
           <span>015° NNE</span>
           <span>030°</span>
-          <span>045° NE</span>
+          <span>060°</span>
         </div>
         <div class="compass-center-indicator"></div>
       </div>
 
-      <!-- Left Telemetry Readings -->
-      <div class="hud-telemetry-left">
+      <!-- Left Peripheral Telemetry Panel (Hidden in Minimal Declutter Mode) -->
+      <div class="hud-telemetry-left hud-peripheral-panel" id="hud-left-panel">
         <div class="telem-row">
-          <span class="telem-label">SYS ARCH:</span>
-          <span class="telem-val">ANDURIL LATTICE v5.8</span>
+          <span class="telem-label">MESH NET:</span>
+          <span class="telem-val green">LATTICE C2 SYNCED</span>
         </div>
         <div class="telem-row">
-          <span class="telem-label">OPTIC LINK:</span>
-          <span class="telem-val green">SIG-716 SYNCED (ZERO 200M)</span>
+          <span class="telem-label">WEAPON LINK:</span>
+          <span class="telem-val">SIG-716i (7.62 NATO)</span>
         </div>
         <div class="telem-row">
-          <span class="telem-label">BATTERY:</span>
-          <span class="telem-val">94% │ 18.2 HR REMAINING</span>
+          <span class="telem-label">DESIGNATED:</span>
+          <span class="telem-val" id="designated-telem" style="color: var(--warning);">NONE [RMB TO LOCK]</span>
         </div>
         <div class="telem-row">
-          <span class="telem-label">SATCOM:</span>
-          <span class="telem-val green">ENCRYPTED MIL-LINK ACTIVE</span>
+          <span class="telem-label">WAYPOINT:</span>
+          <span class="telem-val" id="waypoint-telem" style="color: var(--primary);">STANDBY</span>
         </div>
         <div class="telem-row">
-          <span class="telem-label">TARGETS:</span>
-          <span class="telem-val" style="color: var(--hostile);" id="target-count-telem">3 HOSTILE PLA │ 1 FRIENDLY</span>
+          <span class="telem-label">CONTACTS:</span>
+          <span class="telem-val" style="color: var(--hostile);" id="target-count-telem">3 HOSTILE │ 1 BLUFOR</span>
         </div>
       </div>
 
-      <!-- 3D Minimap / Radar -->
-      <div class="minimap-container">
+      <!-- Top-Right Circular Tactical Radar -->
+      <div class="minimap-container hud-peripheral-panel" id="hud-radar-panel">
+        <div id="minimap-fov-cone"></div>
         <div class="minimap-radar-sweep"></div>
         <div class="minimap-rings"></div>
         <div class="minimap-crosshair"></div>
-        
-        <!-- Minimap Blips -->
-        <div class="minimap-blip player" title="Soldier POV"></div>
-        <div class="minimap-blip hostile" id="blip-e1" style="top: 32%; left: 62%;"></div>
-        <div class="minimap-blip hostile" id="blip-e2" style="top: 26%; left: 38%;"></div>
-        <div class="minimap-blip hostile" id="blip-e3" style="top: 42%; left: 78%;"></div>
-        <div class="minimap-blip friendly" id="blip-f1" style="top: 72%; left: 24%;"></div>
-        
-        <div class="minimap-tag">EAGLE-RADAR 250M</div>
+
+        <!-- Dynamic Blips -->
+        <div class="minimap-blip player" title="Operator"></div>
+        <div class="minimap-blip hostile" id="blip-hostile-1"></div>
+        <div class="minimap-blip hostile" id="blip-hostile-2"></div>
+        <div class="minimap-blip hostile" id="blip-hostile-3"></div>
+        <div class="minimap-blip friendly" id="blip-friendly-1"></div>
+        <div class="minimap-blip waypoint" id="blip-waypoint" style="display: none;"></div>
+
+        <div class="minimap-tag">LATTICE RADAR 150M</div>
       </div>
 
-      <!-- Drone Recon PIP View -->
-      <div class="drone-pip-box" id="drone-pip">
+      <!-- Bottom-Right Interactive Ghost-4 UAV Overwatch PIP -->
+      <div class="drone-pip-box hud-peripheral-panel" id="drone-pip">
         <div class="drone-pip-header">
-          <span>GHOST-4 UAV FLIR OVERWATCH</span>
-          <span style="color: var(--friendly);">LIVE 4K</span>
+          <span id="uav-header-title">GHOST-4 UAV OVERWATCH</span>
+          <button class="uav-cam-btn" id="btn-uav-cam" onclick="toggleUAVAngle(event)">CAM: CHASE FLIR</button>
         </div>
-        <canvas id="drone-canvas"></canvas>
+        <div class="drone-pip-viewport">
+          <canvas id="drone-canvas"></canvas>
+          <div class="drone-hud-overlay">
+            <div style="display:flex; justify-content:space-between;">
+              <span id="uav-target-label">TRK: PATROL SECTOR</span>
+              <span>ALT: 185M</span>
+            </div>
+            <div class="drone-crosshair"></div>
+            <div style="display:flex; justify-content:space-between;">
+              <span id="uav-coords-label">IR-LOCK ACTIVE</span>
+              <span style="color:#00f0ff;">DATALINK 99%</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Central Smart Reticle & Ballistics -->
-      <div class="smart-crosshair" id="smart-crosshair">
-        <div class="smart-crosshair-ring"></div>
-        <div class="smart-crosshair-center"></div>
-        <div class="smart-crosshair-bars"></div>
-        <div class="ballistics-readout" id="ballistics-readout">
-          RNG: 78m<br>
-          ELEV: +1.2 MIL<br>
-          WIND: 9kn NW<br>
-          SOL: 99.4%
+      <!-- Bottom-Left Weapon & Optical Zoom Readout -->
+      <div class="hud-weapon-status" id="hud-weapon-panel">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+          <span style="font-family: var(--ui-font); font-size: 12px; font-weight: 800; color: #fff;">SIG-716G2 DMR</span>
+          <span style="font-size: 10px; color: var(--primary);" id="declutter-badge">HUD: FULL C2</span>
         </div>
-      </div>
-
-      <!-- Weapon & Ammo Status -->
-      <div class="hud-weapon-status">
-        <div style="font-family: var(--ui-font); font-size: 13px; font-weight: 800; color: #fff;">
-          SIG-716 DMR <span style="font-size: 10px; color: var(--primary);">7.62x51mm NATO</span>
+        <div style="display: flex; gap: 14px; font-size: 11px; align-items: center;">
+          <span style="cursor:pointer;" onclick="reloadWeapon()" title="Click or press R to Reload">
+            MAG: <strong style="color: var(--friendly);" id="ammo-count">20 / 20</strong>
+          </span>
+          <span>LRF: <strong style="color: var(--primary);" id="lrf-bottom-readout">078m</strong></span>
+          <span>BDC: <strong style="color: var(--warning);">AUTO-CIP</strong></span>
         </div>
-        <div style="display: flex; gap: 12px; font-size: 12px;">
-          <span>MAG: <strong style="color: var(--friendly);" id="ammo-count">20 / 20</strong></span>
-          <span>MODE: <strong>SEMI-AUTO</strong></span>
-          <span>LEAD: <strong style="color: #ffb800;">AUTO-COMPENSATED</strong></span>
+        <div class="zoom-selector-row">
+          <span style="font-size: 9.5px; color: #7aa5b9; margin-right: 4px;">OPTIC ZOOM:</span>
+          <button class="zoom-pill active" id="zoom-1" onclick="setZoomLevel(1.0, event)">1.0X WIDE</button>
+          <button class="zoom-pill" id="zoom-2" onclick="setZoomLevel(2.0, event)">2.0X COMBAT</button>
+          <button class="zoom-pill" id="zoom-4" onclick="setZoomLevel(4.0, event)">4.0X DMR</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Bottom Tactical Switcher Bar -->
+  <!-- Bottom Tactical Sensor & System Bar -->
   <footer>
     <div class="master-switch-container">
       <button class="btn-master-toggle" id="btn-helmet-master" onclick="toggleHelmet()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2C6.48 2 2 6.48 2 12c0 3.31 1.61 6.24 4.09 8.04L6 22l4-2h4l4 2-.09-1.96C20.39 18.24 22 15.31 22 12c0-5.52-4.48-10-10-10z"></path>
           <path d="M7 10h10v4H7z"></path>
         </svg>
@@ -999,141 +1049,165 @@
       </button>
     </div>
 
-    <!-- Vision Modes (Only active when helmet is worn) -->
+    <!-- 6 Multi-Spectral Vision Modes -->
     <div class="vision-modes-group" id="vision-modes-bar">
-      <span class="mode-label">SENSOR SUITE:</span>
-      
+      <span class="mode-label">SENSORS [1-6]:</span>
+
       <button class="mode-btn active" id="mode-thermal" onclick="setVisionMode('thermal')">
         <span class="mode-dot" style="color: #ff6a00;"></span>
-        THERMAL IRONBOW
+        1:IRONBOW
       </button>
 
       <button class="mode-btn" id="mode-whitehot" onclick="setVisionMode('whitehot')">
         <span class="mode-dot" style="color: #ffffff;"></span>
-        WHITE-HOT FLIR
+        2:WHITE-HOT
       </button>
 
       <button class="mode-btn" id="mode-nvg" onclick="setVisionMode('nvg')">
         <span class="mode-dot" style="color: #00ff66;"></span>
-        NIGHT VISION (GREEN)
+        3:NVG GREEN
       </button>
 
       <button class="mode-btn" id="mode-whitephosphor" onclick="setVisionMode('whitephosphor')">
         <span class="mode-dot" style="color: #9fe2ff;"></span>
-        WHITE PHOSPHOR
+        4:PHOSPHOR
       </button>
 
       <button class="mode-btn" id="mode-fusion" onclick="setVisionMode('fusion')">
         <span class="mode-dot" style="color: #00f0ff;"></span>
-        LATTICE AI FUSION
+        5:LATTICE AI
       </button>
 
       <button class="mode-btn" id="mode-colorstarlight" onclick="setVisionMode('colorstarlight')">
         <span class="mode-dot" style="color: #e6a8ff;"></span>
-        COLOR STARLIGHT
+        6:STARLIGHT
       </button>
     </div>
 
-    <!-- Aux Tactical Options -->
+    <!-- Combat Utility Controls -->
     <div class="aux-controls">
-      <button class="aux-btn active" id="btn-drone-toggle" onclick="toggleDronePIP()">DRONE PIP</button>
-      <button class="aux-btn active" id="btn-skeletal-toggle" onclick="toggleSkeletalAI()">SKELETAL AI</button>
-      <button class="aux-btn" id="btn-sound-toggle" onclick="toggleAudio()">🔊 AUDIO</button>
-      <button class="aux-btn" onclick="fireWeapon()">💥 TEST FIRE</button>
+      <button class="aux-btn" id="btn-scan-pulse" onclick="triggerTerrainScan()">SCAN PULSE [V]</button>
+      <button class="aux-btn active" id="btn-declutter" onclick="cycleDeclutterMode()">HUD: FULL [H]</button>
+      <button class="aux-btn active" id="btn-skeletal-toggle" onclick="toggleSkeletalAI()">POSE AI</button>
+      <button class="aux-btn" id="btn-sound-toggle" onclick="toggleAudio()">AUDIO: OFF</button>
+      <button class="aux-btn warn" onclick="resetScenario()">RESET PATROL</button>
     </div>
   </footer>
 
   <script>
-    /* ===================================================
-       1. GLOBAL STATE & CONFIG
-       =================================================== */
+    /* =====================================================================
+       1. CENTRAL TACTICAL STATE & REAL-WORLD BALLISTIC CONFIGURATION
+       ===================================================================== */
     const state = {
       helmetEquipped: false,
-      visionMode: 'thermal', // 'thermal', 'whitehot', 'nvg', 'whitephosphor', 'fusion', 'colorstarlight'
+      visionMode: 'thermal', // 'thermal' | 'whitehot' | 'nvg' | 'whitephosphor' | 'fusion' | 'colorstarlight'
+      declutterMode: 0,      // 0: FULL C2, 1: COMBAT MINIMAL, 2: OPTIC ONLY
       skeletalAI: true,
       dronePIP: true,
+      uavChaseMode: true,    // true: Low-Angle Chase FLIR, false: Top-Down Overhead
       audioEnabled: false,
       ammo: 20,
+      maxAmmo: 20,
+      isReloading: false,
       zoom: 1.0,
-      mouse: { x: 0, y: 0, targetX: 0, targetY: 0 },
-      lookPitch: 0,
+      targetFov: 65,
+      currentFov: 65,
+      // Normalized device coordinates (-1 to +1) and screen pixels for the smart reticle
+      mouse: {
+        x: 0,
+        y: 0,
+        screenX: window.innerWidth / 2,
+        screenY: window.innerHeight / 2
+      },
       lookYaw: 0,
-      targets: [
-        {
-          id: 'hostile-1',
-          name: 'PLA RECON SCOUT',
-          type: 'hostile',
-          pos: new THREE.Vector3(12, 1.2, -45),
-          screenX: 0,
-          screenY: 0,
-          heat: '37.8°C',
-          range: 48,
-          threat: 'ELEVATED',
-          status: 'PATROLLING',
-          weapon: 'QBZ-191',
-          hp: 100,
-          isDead: false,
-          walkCycle: 0
-        },
-        {
-          id: 'hostile-2',
-          name: 'PLA SQUAD LEADER',
-          type: 'hostile',
-          pos: new THREE.Vector3(-24, 4.5, -85),
-          screenX: 0,
-          screenY: 0,
-          heat: '38.4°C',
-          range: 88,
-          threat: 'CRITICAL',
-          status: 'OBSERVING FLANK',
-          weapon: 'TYPE 88 SNIPER',
-          hp: 100,
-          isDead: false,
-          walkCycle: 1.5
-        },
-        {
-          id: 'hostile-3',
-          name: 'PLA FLANK OPERATOR',
-          type: 'hostile',
-          pos: new THREE.Vector3(38, 2.0, -68),
-          screenX: 0,
-          screenY: 0,
-          heat: '37.2°C',
-          range: 77,
-          threat: 'HIGH',
-          status: 'ADVANCING TREE COVER',
-          weapon: 'QBZ-191 CARBINE',
-          hp: 100,
-          isDead: false,
-          walkCycle: 3.1
-        },
-        {
-          id: 'friendly-1',
-          name: 'PARA SF (HAWKEYE-2)',
-          type: 'friendly',
-          pos: new THREE.Vector3(-18, 0.8, -25),
-          screenX: 0,
-          screenY: 0,
-          heat: '36.9°C',
-          range: 26,
-          threat: 'FRIENDLY',
-          status: 'OVERWATCH READY',
-          weapon: 'TAVOR TAR-21',
-          hp: 100,
-          isDead: false,
-          walkCycle: 0
-        }
-      ],
+      lookPitch: 0,
+      recoilPitch: 0,
+      lrfDistance: 78,
+      lrfHitPoint: new THREE.Vector3(0, 0, -78),
+      designatedTargetId: 'hostile-2', // Default UAV overwatch lock
+      waypoint: null,                  // { pos: THREE.Vector3, mgrs: string }
+      scanPulse: {
+        active: false,
+        radius: 0,
+        maxRadius: 210
+      },
+      hitMarkerLife: 0,
+      hitMarkerKill: false,
+      incomingSuppressionAlert: 0,
+      targets: [],
       tracers: [],
-      particles: [],
+      impactParticles: [],
       audioCtx: null,
       noiseNode: null,
-      heartbeatInterval: null
+      lastHeartbeat: 0
     };
 
-    /* ===================================================
-       2. THREE.JS 3D SCENE SETUP
-       =================================================== */
+    const INITIAL_TARGETS_TEMPLATE = [
+      {
+        id: 'hostile-1',
+        code: 'H-01',
+        name: 'PLA RECON SCOUT',
+        type: 'hostile',
+        basePos: { x: 14, y: 0, z: -48 },
+        patrolAmp: 9,
+        patrolSpeed: 0.75,
+        heat: '37.8°C',
+        threat: 'ELEVATED',
+        status: 'SKIRMISH ADVANCE',
+        weapon: 'QBZ-191 5.8mm',
+        hp: 100,
+        walkCycle: 0.2
+      },
+      {
+        id: 'hostile-2',
+        code: 'H-02',
+        name: 'PLA SQUAD MARKS',
+        type: 'hostile',
+        basePos: { x: -22, y: 0, z: -82 },
+        patrolAmp: 6,
+        patrolSpeed: 0.5,
+        heat: '38.4°C',
+        threat: 'CRITICAL',
+        status: 'FLANK OVERWATCH',
+        weapon: 'QBU-191 DMR',
+        hp: 100,
+        walkCycle: 1.7
+      },
+      {
+        id: 'hostile-3',
+        code: 'H-03',
+        name: 'PLA ASSAULT GUNNER',
+        type: 'hostile',
+        basePos: { x: 36, y: 0, z: -66 },
+        patrolAmp: 11,
+        patrolSpeed: 0.65,
+        heat: '37.5°C',
+        threat: 'HIGH',
+        status: 'SUPPRESSING',
+        weapon: 'QJB-201 LMG',
+        hp: 100,
+        walkCycle: 3.1
+      },
+      {
+        id: 'friendly-1',
+        code: 'BLU-1',
+        name: 'PARA SF (HAWKEYE-2)',
+        type: 'friendly',
+        basePos: { x: -15, y: 0, z: -26 },
+        patrolAmp: 2,
+        patrolSpeed: 0.3,
+        heat: '36.9°C',
+        threat: 'FRIENDLY BLUFOR',
+        status: 'OVERWATCH LINKED',
+        weapon: 'SIG-716i NATO',
+        hp: 100,
+        walkCycle: 0.0
+      }
+    ];
+
+    /* =====================================================================
+       2. THREE.JS 3D SCENE, CAMERAS & RAYCASTER INITIALIZATION
+       ===================================================================== */
     const container = document.getElementById('pov-container');
     const threeCanvas = document.getElementById('three-canvas');
     const hudCanvas = document.getElementById('hud-canvas');
@@ -1143,23 +1217,23 @@
     scene.fog = new THREE.FogExp2(0x02070c, 0.012);
 
     const camera = new THREE.PerspectiveCamera(65, container.clientWidth / container.clientHeight, 0.1, 1000);
-    camera.position.set(0, 1.8, 0);
+    camera.position.set(0, 1.85, 0);
 
     const renderer = new THREE.WebGLRenderer({ canvas: threeCanvas, antialias: true, alpha: false });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.8;
+    renderer.toneMappingExposure = 0.75;
 
-    // Drone PIP Setup
+    // Ghost-4 UAV Picture-in-Picture Renderer & Camera
     const droneCanvas = document.getElementById('drone-canvas');
     const droneRenderer = new THREE.WebGLRenderer({ canvas: droneCanvas, antialias: false });
-    droneRenderer.setSize(210, 113);
-    const droneCamera = new THREE.PerspectiveCamera(60, 210 / 113, 0.5, 500);
-    droneCamera.position.set(5, 55, -55);
-    droneCamera.lookAt(5, 0, -55);
+    droneRenderer.setSize(224, 120);
+    const droneCamera = new THREE.PerspectiveCamera(45, 224 / 120, 0.5, 500);
 
-    // Resize Handler
+    // True 3D Ballistic & LRF Raycaster
+    const raycaster = new THREE.Raycaster();
+
     function handleResize() {
       const w = container.clientWidth;
       const h = container.clientHeight;
@@ -1168,89 +1242,122 @@
       renderer.setSize(w, h);
       hudCanvas.width = w;
       hudCanvas.height = h;
+
+      if (state.mouse.x === 0 && state.mouse.y === 0) {
+        state.mouse.screenX = w / 2;
+        state.mouse.screenY = h / 2;
+      }
     }
     window.addEventListener('resize', handleResize);
     handleResize();
 
-    /* ===================================================
-       3. HIMALAYAN 3D ENVIRONMENT CREATION
-       =================================================== */
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0x0a1626, 0.4);
+    /* =====================================================================
+       3. HIMALAYAN HIGH-ALTITUDE 3D ENVIRONMENT & SCAN PULSE RING
+       ===================================================================== */
+    const ambientLight = new THREE.AmbientLight(0x0a1626, 0.45);
     scene.add(ambientLight);
 
-    const moonLight = new THREE.DirectionalLight(0x4477aa, 0.6);
+    const moonLight = new THREE.DirectionalLight(0x4477aa, 0.65);
     moonLight.position.set(-50, 120, -50);
     scene.add(moonLight);
 
-    // Muzzle flash dynamic light
-    const flashLight = new THREE.PointLight(0xffaa22, 0, 80);
-    flashLight.position.set(0, 1.5, -2);
+    const flashLight = new THREE.PointLight(0xffaa22, 0, 85);
+    flashLight.position.set(0, 1.6, -1.5);
     scene.add(flashLight);
 
-    // Procedural Himalayan Terrain Mesh
-    const terrainGeo = new THREE.PlaneGeometry(350, 350, 80, 80);
-    terrainGeo.rotateX(-Math.PI / 2);
+    function getTerrainHeight(x, z) {
+      let y = Math.sin(x * 0.03) * Math.cos(z * 0.03) * 5.5;
+      y += Math.sin(x * 0.015 + z * 0.02) * 10.5;
+      if (z < -85) y += Math.pow(Math.abs(z + 85) * 0.14, 1.55);
+      if (Math.abs(x) < 22 && Math.abs(z) < 22) y *= 0.2;
+      return y - 0.5;
+    }
 
+    // Main Terrain Mesh
+    const terrainGeo = new THREE.PlaneGeometry(360, 360, 84, 84);
+    terrainGeo.rotateX(-Math.PI / 2);
     const posAttr = terrainGeo.attributes.position;
     for (let i = 0; i < posAttr.count; i++) {
       const x = posAttr.getX(i);
       const z = posAttr.getZ(i);
-      
-      // Ridge elevations & mountain valleys
-      let y = Math.sin(x * 0.03) * Math.cos(z * 0.03) * 6;
-      y += Math.sin(x * 0.015 + z * 0.02) * 12;
-      // High crags in the distance
-      if (z < -80) {
-        y += Math.pow(Math.abs(z + 80) * 0.15, 1.6);
-      }
-      // Gentle slope near player
-      if (Math.abs(x) < 20 && Math.abs(z) < 20) {
-        y *= 0.2;
-      }
-      posAttr.setY(i, y);
+      posAttr.setY(i, getTerrainHeight(x, z) + 0.5);
     }
     terrainGeo.computeVertexNormals();
 
     const terrainMat = new THREE.MeshStandardMaterial({
       color: 0x111c24,
       roughness: 0.9,
-      metalness: 0.1,
-      wireframe: false
+      metalness: 0.1
     });
     const terrain = new THREE.Mesh(terrainGeo, terrainMat);
     terrain.position.y = -0.5;
     scene.add(terrain);
 
-    // Himalayan Pine Forest & Boulders
+    // Topographic Wireframe Overlay Mesh (Illuminates during Lattice Terrain Scan Pulse)
+    const topoWireMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.0
+    });
+    const topoWireMesh = new THREE.Mesh(terrainGeo, topoWireMat);
+    topoWireMesh.position.y = -0.46;
+    scene.add(topoWireMesh);
+
+    // 3D Expanding Scan Pulse Torus Ring
+    const scanRingGeo = new THREE.RingGeometry(0.8, 1.3, 64);
+    scanRingGeo.rotateX(-Math.PI / 2);
+    const scanRingMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.0
+    });
+    const scanRingMesh = new THREE.Mesh(scanRingGeo, scanRingMat);
+    scanRingMesh.position.set(0, 1.0, 0);
+    scene.add(scanRingMesh);
+
+    // 3D Tactical Waypoint Pillar Group
+    const waypointGroup = new THREE.Group();
+    const wpBeamGeo = new THREE.CylinderGeometry(0.12, 0.12, 45, 12);
+    const wpBeamMat = new THREE.MeshBasicMaterial({ color: 0xffd000, transparent: true, opacity: 0.55 });
+    const wpBeam = new THREE.Mesh(wpBeamGeo, wpBeamMat);
+    wpBeam.position.y = 22.5;
+    waypointGroup.add(wpBeam);
+
+    const wpRingGeo = new THREE.RingGeometry(1.2, 1.6, 32);
+    wpRingGeo.rotateX(-Math.PI / 2);
+    const wpRing = new THREE.Mesh(wpRingGeo, new THREE.MeshBasicMaterial({ color: 0xffd000, side: THREE.DoubleSide }));
+    wpRing.position.y = 0.25;
+    waypointGroup.add(wpRing);
+    waypointGroup.visible = false;
+    scene.add(waypointGroup);
+
+    // Pine Forest & Boulders
     const pineTrees = [];
-    const pineTreeGroup = new THREE.Group();
+    const environmentColliders = [terrain];
 
     function createPineTree(x, z, scale = 1) {
       const tree = new THREE.Group();
-      
-      // Trunk
-      const trunkGeo = new THREE.CylinderGeometry(0.25 * scale, 0.4 * scale, 4 * scale, 6);
+      const trunkGeo = new THREE.CylinderGeometry(0.24 * scale, 0.38 * scale, 3.8 * scale, 6);
       const trunkMat = new THREE.MeshStandardMaterial({ color: 0x1b130e, roughness: 0.9 });
       const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-      trunk.position.y = 2 * scale;
+      trunk.position.y = 1.9 * scale;
       tree.add(trunk);
 
-      // Conical needle layers
       const needleMat = new THREE.MeshStandardMaterial({ color: 0x091e17, roughness: 0.8 });
       for (let j = 0; j < 4; j++) {
-        const radius = (2.2 - j * 0.45) * scale;
-        const height = (3.0 - j * 0.3) * scale;
-        const coneGeo = new THREE.ConeGeometry(radius, height, 7);
-        const cone = new THREE.Mesh(coneGeo, needleMat);
-        cone.position.y = (3.5 + j * 1.8) * scale;
+        const radius = (2.1 - j * 0.42) * scale;
+        const height = (2.9 - j * 0.28) * scale;
+        const cone = new THREE.Mesh(new THREE.ConeGeometry(radius, height, 7), needleMat);
+        cone.position.y = (3.4 + j * 1.75) * scale;
         tree.add(cone);
 
-        // Snow layer on branch tops
-        const snowGeo = new THREE.ConeGeometry(radius * 0.9, height * 0.3, 7);
-        const snowMat = new THREE.MeshStandardMaterial({ color: 0x6e8a99, roughness: 0.5 });
-        const snow = new THREE.Mesh(snowGeo, snowMat);
-        snow.position.y = (3.6 + j * 1.8) * scale;
+        const snow = new THREE.Mesh(
+          new THREE.ConeGeometry(radius * 0.88, height * 0.28, 7),
+          new THREE.MeshStandardMaterial({ color: 0x6e8a99, roughness: 0.5 })
+        );
+        snow.position.y = (3.5 + j * 1.75) * scale;
         tree.add(snow);
       }
 
@@ -1258,180 +1365,228 @@
       return tree;
     }
 
-    function getTerrainHeight(x, z) {
-      let y = Math.sin(x * 0.03) * Math.cos(z * 0.03) * 6;
-      y += Math.sin(x * 0.015 + z * 0.02) * 12;
-      if (z < -80) y += Math.pow(Math.abs(z + 80) * 0.15, 1.6);
-      if (Math.abs(x) < 20 && Math.abs(z) < 20) y *= 0.2;
-      return y - 0.5;
-    }
-
-    // Populate forest
-    for (let i = 0; i < 90; i++) {
-      const x = (Math.random() - 0.5) * 280;
-      const z = -15 - Math.random() * 220;
-      if (Math.abs(x) < 6 && z > -35) continue; // Keep forward sightline
-      const scale = 0.8 + Math.random() * 0.9;
+    for (let i = 0; i < 82; i++) {
+      const x = (Math.random() - 0.5) * 260;
+      const z = -16 - Math.random() * 200;
+      if (Math.abs(x) < 9 && z > -42) continue; // Keep primary engagement corridor clear
+      const scale = 0.8 + Math.random() * 0.85;
       const tree = createPineTree(x, z, scale);
       pineTrees.push(tree);
-      pineTreeGroup.add(tree);
+      scene.add(tree);
     }
-    scene.add(pineTreeGroup);
 
-    // Granite Boulders
-    const boulderGeo = new THREE.DodecahedronGeometry(2, 1);
+    const boulderGeo = new THREE.DodecahedronGeometry(1.8, 1);
     const boulderMat = new THREE.MeshStandardMaterial({ color: 0x1f272e, roughness: 0.95 });
-    for (let i = 0; i < 35; i++) {
+    for (let i = 0; i < 30; i++) {
       const boulder = new THREE.Mesh(boulderGeo, boulderMat);
-      const bx = (Math.random() - 0.5) * 200;
-      const bz = -20 - Math.random() * 160;
-      boulder.position.set(bx, getTerrainHeight(bx, bz) + 0.8, bz);
-      boulder.scale.set(1 + Math.random(), 0.7 + Math.random() * 0.8, 1 + Math.random());
+      const bx = (Math.random() - 0.5) * 190;
+      const bz = -20 - Math.random() * 150;
+      if (Math.abs(bx) < 8 && bz > -40) continue;
+      boulder.position.set(bx, getTerrainHeight(bx, bz) + 0.7, bz);
+      boulder.scale.set(1 + Math.random(), 0.7 + Math.random() * 0.7, 1 + Math.random());
       boulder.rotation.set(Math.random(), Math.random(), Math.random());
       scene.add(boulder);
+      environmentColliders.push(boulder);
     }
 
-    // Distant Snow-Capped Himalayan Peak Silhouettes
-    const peakGeo = new THREE.ConeGeometry(80, 160, 5);
+    // Distant Himalayan Peaks
+    const peakGeo = new THREE.ConeGeometry(80, 165, 5);
     const peakMat = new THREE.MeshStandardMaterial({ color: 0x223545, roughness: 0.9 });
     for (let i = 0; i < 6; i++) {
       const peak = new THREE.Mesh(peakGeo, peakMat);
-      peak.position.set(-160 + i * 65, 50, -220 - Math.random() * 60);
-      peak.rotation.y = i;
+      peak.position.set(-165 + i * 66, 52, -230 - Math.random() * 50);
+      peak.rotation.y = i * 1.1;
       scene.add(peak);
     }
 
     // Blizzard Snow Particle System
-    const snowCount = 2000;
+    const snowCount = 1900;
     const snowGeo = new THREE.BufferGeometry();
     const snowPos = new Float32Array(snowCount * 3);
     const snowVel = [];
-
     for (let i = 0; i < snowCount; i++) {
       snowPos[i * 3] = (Math.random() - 0.5) * 160;
       snowPos[i * 3 + 1] = Math.random() * 45;
       snowPos[i * 3 + 2] = (Math.random() - 0.5) * 160 - 40;
       snowVel.push({
-        x: -0.6 - Math.random() * 0.8, // Gale force Himalayan wind
-        y: -0.3 - Math.random() * 0.4,
-        z: 0.2 + Math.random() * 0.3
+        x: -0.55 - Math.random() * 0.7,
+        y: -0.28 - Math.random() * 0.35,
+        z: 0.18 + Math.random() * 0.25
       });
     }
     snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
-
-    const snowMat = new THREE.PointsMaterial({
-      color: 0xffffff,
-      size: 0.35,
-      transparent: true,
-      opacity: 0.75
-    });
+    const snowMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.32, transparent: true, opacity: 0.72 });
     const snowSystem = new THREE.Points(snowGeo, snowMat);
     scene.add(snowSystem);
 
-    /* ===================================================
-       4. TACTICAL SOLDIER 3D RIGS (PLA & ALLY)
-       =================================================== */
+    /* =====================================================================
+       4. TACTICAL SOLDIER 3D RIGS, HITBOXES & PATROL SPAWNER
+       ===================================================================== */
     const soldierMeshes = [];
+    const hitboxMeshes = [];
 
     function buildSoldierMesh(targetData) {
       const group = new THREE.Group();
-      
       const isHostile = targetData.type === 'hostile';
-      const uniformColor = isHostile ? 0x18241c : 0x1f2922; // PLA Type 07/19 vs Para SF
+      const uniformColor = isHostile ? 0x18241c : 0x1f2922;
       const bodyMat = new THREE.MeshStandardMaterial({ color: uniformColor, roughness: 0.8 });
-      
-      // Torso
-      const torsoGeo = new THREE.BoxGeometry(0.7, 0.9, 0.4);
-      const torso = new THREE.Mesh(torsoGeo, bodyMat);
+
+      // Torso & Plate Carrier
+      const torso = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.92, 0.42), bodyMat);
       torso.position.y = 1.35;
       group.add(torso);
 
-      // Plate Carrier Vest
-      const vestMat = new THREE.MeshStandardMaterial({ color: 0x111612, roughness: 0.9 });
-      const vest = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.7, 0.46), vestMat);
+      const vest = new THREE.Mesh(
+        new THREE.BoxGeometry(0.78, 0.72, 0.48),
+        new THREE.MeshStandardMaterial({ color: 0x111612, roughness: 0.9 })
+      );
       vest.position.y = 1.35;
       group.add(vest);
 
-      // Head & Helmet
-      const headMat = new THREE.MeshStandardMaterial({ color: 0x966952, roughness: 0.6 });
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 10), headMat);
-      head.position.y = 2.0;
+      // Head & Ballistic Helmet
+      const head = new THREE.Mesh(
+        new THREE.SphereGeometry(0.21, 10, 10),
+        new THREE.MeshStandardMaterial({ color: 0x966952, roughness: 0.6 })
+      );
+      head.position.y = 2.02;
       group.add(head);
 
-      const helmetMat = new THREE.MeshStandardMaterial({ color: isHostile ? 0x141f17 : 0x1c2b28, roughness: 0.7 });
-      const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), helmetMat);
-      helmet.position.y = 2.06;
+      const helmet = new THREE.Mesh(
+        new THREE.SphereGeometry(0.26, 12, 12),
+        new THREE.MeshStandardMaterial({ color: isHostile ? 0x141f17 : 0x1c2b28, roughness: 0.7 })
+      );
+      helmet.position.y = 2.08;
       group.add(helmet);
 
-      // Arms & Weapon
-      const armMat = new THREE.MeshStandardMaterial({ color: uniformColor });
-      const rightArm = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.7), armMat);
+      // Arms & Rifle
+      const rightArm = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.7), bodyMat);
       rightArm.position.set(0.48, 1.35, 0.2);
       rightArm.rotation.x = -Math.PI / 3;
       group.add(rightArm);
 
-      const leftArm = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.7), armMat);
+      const leftArm = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.7), bodyMat);
       leftArm.position.set(-0.48, 1.35, 0.25);
       leftArm.rotation.x = -Math.PI / 4;
       leftArm.rotation.z = Math.PI / 6;
       group.add(leftArm);
 
-      // Rifle
-      const rifleMat = new THREE.MeshStandardMaterial({ color: 0x080808, roughness: 0.4, metalness: 0.8 });
-      const rifle = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.16, 1.2), rifleMat);
-      rifle.position.set(0.25, 1.25, 0.45);
-      rifle.rotation.y = 0.1;
+      const rifle = new THREE.Mesh(
+        new THREE.BoxGeometry(0.12, 0.16, 1.25),
+        new THREE.MeshStandardMaterial({ color: 0x080808, roughness: 0.4, metalness: 0.8 })
+      );
+      rifle.position.set(0.25, 1.25, 0.48);
+      rifle.rotation.y = 0.08;
       group.add(rifle);
 
       // Legs
-      const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.9), armMat);
+      const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.1, 0.9), bodyMat);
       leftLeg.position.set(-0.22, 0.45, 0);
       group.add(leftLeg);
 
-      const rightLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.9), armMat);
+      const rightLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.1, 0.9), bodyMat);
       rightLeg.position.set(0.22, 0.45, 0);
       group.add(rightLeg);
 
-      // Laser Pointer / Muzzle for Hostile
+      // Infrared Aiming Laser for Hostiles
+      let laser = null;
       if (isHostile) {
-        const laserMat = new THREE.LineBasicMaterial({ color: 0xff1133, transparent: true, opacity: 0.4 });
+        const laserMat = new THREE.LineBasicMaterial({ color: 0xff1a3c, transparent: true, opacity: 0.42 });
         const laserGeo = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(0.25, 1.25, 1.0),
-          new THREE.Vector3(0.25 + (Math.random() - 0.5) * 5, 1.25, 25)
+          new THREE.Vector3(0.25, 1.25, 1.05),
+          new THREE.Vector3(0.25, 1.2, 22)
         ]);
-        const laser = new THREE.Line(laserGeo, laserMat);
+        laser = new THREE.Line(laserGeo, laserMat);
         group.add(laser);
       }
 
-      // Thermal highlight material for switching modes
+      // Generous Invisible Ballistic Raycast Hitbox Cylinder for reliable combat hit detection
+      const hitboxGeo = new THREE.CylinderGeometry(1.15, 1.15, 2.6, 10);
+      const hitboxMat = new THREE.MeshBasicMaterial({ visible: false });
+      const hitbox = new THREE.Mesh(hitboxGeo, hitboxMat);
+      hitbox.position.y = 1.3;
+      hitbox.userData.targetData = targetData;
+      group.add(hitbox);
+      hitboxMeshes.push(hitbox);
+
+      // Store original materials for vision mode switching
       group.traverse(child => {
-        if (child.isMesh) {
+        if (child.isMesh && child !== hitbox) {
           child.userData.originalMat = child.material;
           child.userData.isHostile = isHostile;
         }
       });
 
-      // Position soldier
       group.position.copy(targetData.pos);
-      group.position.y = getTerrainHeight(targetData.pos.x, targetData.pos.z);
       scene.add(group);
 
-      soldierMeshes.push({ mesh: group, data: targetData });
-      return group;
+      soldierMeshes.push({
+        mesh: group,
+        data: targetData,
+        laser,
+        leftLeg,
+        rightLeg,
+        hitbox
+      });
     }
 
-    state.targets.forEach(t => buildSoldierMesh(t));
+    function spawnTargetsFromTemplate() {
+      // Clear previous meshes if resetting
+      soldierMeshes.forEach(sm => scene.remove(sm.mesh));
+      soldierMeshes.length = 0;
+      hitboxMeshes.length = 0;
+      state.targets.length = 0;
 
-    /* ===================================================
-       5. AUDIO SYNTHESIS ENGINE (Zero external assets!)
-       =================================================== */
+      INITIAL_TARGETS_TEMPLATE.forEach(tpl => {
+        const x = tpl.basePos.x + (Math.random() - 0.5) * 4;
+        const z = tpl.basePos.z + (Math.random() - 0.5) * 4;
+        const y = getTerrainHeight(x, z);
+        const tObj = {
+          id: tpl.id,
+          code: tpl.code,
+          name: tpl.name,
+          type: tpl.type,
+          baseX: x,
+          baseZ: z,
+          patrolAmp: tpl.patrolAmp,
+          patrolSpeed: tpl.patrolSpeed,
+          pos: new THREE.Vector3(x, y, z),
+          screenX: 0,
+          screenY: 0,
+          inFront: false,
+          heat: tpl.heat,
+          range: Math.round(Math.hypot(x, z)),
+          threat: tpl.threat,
+          status: tpl.status,
+          weapon: tpl.weapon,
+          hp: 100,
+          isDead: false,
+          fallProgress: 0,
+          walkCycle: tpl.walkCycle,
+          nextFireTime: performance.now() + 2500 + Math.random() * 3500
+        };
+        state.targets.push(tObj);
+        buildSoldierMesh(tObj);
+      });
+
+      state.designatedTargetId = 'hostile-2';
+      updateTelemetryCounts();
+      if (state.helmetEquipped) {
+        setVisionMode(state.visionMode, true);
+      }
+    }
+
+    spawnTargetsFromTemplate();
+
+    /* =====================================================================
+       5. FIXED WEBAUDIO SYNTHESIZER (PROPER MUTE/UNMUTE & COMBAT SFX)
+       ===================================================================== */
     function initAudio() {
       if (state.audioCtx) return;
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         state.audioCtx = new AudioContext();
 
-        // Ambient Himalayan Wind Generator
+        // Procedural Himalayan Blizzard Wind Generator
         const bufferSize = state.audioCtx.sampleRate * 2;
         const noiseBuffer = state.audioCtx.createBuffer(1, bufferSize, state.audioCtx.sampleRate);
         const output = noiseBuffer.getChannelData(0);
@@ -1445,10 +1600,10 @@
 
         const filter = state.audioCtx.createBiquadFilter();
         filter.type = 'lowpass';
-        filter.frequency.value = 320;
+        filter.frequency.value = 310;
 
         const windGain = state.audioCtx.createGain();
-        windGain.gain.value = 0.08;
+        windGain.gain.value = 0.0; // Start silent until audioEnabled is true
 
         whiteNoise.connect(filter);
         filter.connect(windGain);
@@ -1457,183 +1612,502 @@
 
         state.noiseNode = { windGain, filter };
       } catch (e) {
-        console.warn('AudioContext failed:', e);
+        console.warn('WebAudio init error:', e);
       }
     }
 
-    function playTone(freq, duration, type = 'sine', volume = 0.15) {
-      if (!state.audioCtx) return;
+    function syncWindAudioGain() {
+      if (!state.audioCtx || !state.noiseNode) return;
+      if (state.audioCtx.state === 'suspended') {
+        state.audioCtx.resume();
+      }
+      const targetGain = state.audioEnabled ? (state.helmetEquipped ? 0.05 : 0.11) : 0.0;
+      state.noiseNode.windGain.gain.setTargetAtTime(targetGain, state.audioCtx.currentTime, 0.08);
+    }
+
+    function playTone(freq, duration, type = 'sine', volume = 0.14) {
+      if (!state.audioEnabled || !state.audioCtx) return;
       try {
+        const t = state.audioCtx.currentTime;
         const osc = state.audioCtx.createOscillator();
         const gain = state.audioCtx.createGain();
         osc.type = type;
-        osc.frequency.setValueAtTime(freq, state.audioCtx.currentTime);
-        gain.gain.setValueAtTime(volume, state.audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, state.audioCtx.currentTime + duration);
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(volume, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
         osc.connect(gain);
         gain.connect(state.audioCtx.destination);
-        osc.start();
-        osc.stop(state.audioCtx.currentTime + duration);
+        osc.start(t);
+        osc.stop(t + duration);
       } catch (e) {}
     }
 
     function playHelmetBootSound() {
-      if (!state.audioCtx) return;
-      // High-tech rising tactical chime
-      playTone(300, 0.15, 'sawtooth', 0.1);
-      setTimeout(() => playTone(600, 0.2, 'sine', 0.15), 120);
-      setTimeout(() => playTone(1200, 0.35, 'sine', 0.2), 260);
-      setTimeout(() => playTone(1800, 0.45, 'triangle', 0.18), 450);
+      if (!state.audioEnabled || !state.audioCtx) return;
+      playTone(320, 0.12, 'sawtooth', 0.09);
+      setTimeout(() => playTone(640, 0.16, 'sine', 0.12), 110);
+      setTimeout(() => playTone(1280, 0.25, 'sine', 0.15), 230);
+      setTimeout(() => playTone(1920, 0.35, 'triangle', 0.14), 380);
     }
 
     function playGunshotSound() {
-      if (!state.audioCtx) return;
-      const t = state.audioCtx.currentTime;
-      // Gunshot blast
-      const osc = state.audioCtx.createOscillator();
-      const gain = state.audioCtx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(160, t);
-      osc.frequency.exponentialRampToValueAtTime(30, t + 0.25);
-      gain.gain.setValueAtTime(0.4, t);
-      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
-      osc.connect(gain);
-      gain.connect(state.audioCtx.destination);
-      osc.start(t);
-      osc.stop(t + 0.3);
+      if (!state.audioEnabled || !state.audioCtx) return;
+      try {
+        const t = state.audioCtx.currentTime;
+        const osc = state.audioCtx.createOscillator();
+        const gain = state.audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(175, t);
+        osc.frequency.exponentialRampToValueAtTime(28, t + 0.22);
+        gain.gain.setValueAtTime(0.32, t);
+        gain.gain.exponentialRampToValueAtTime(0.008, t + 0.24);
+        osc.connect(gain);
+        gain.connect(state.audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.25);
 
-      // Mechanical bolt snap
-      setTimeout(() => playTone(800, 0.05, 'square', 0.12), 120);
+        // Bolt carrier snap
+        setTimeout(() => playTone(920, 0.04, 'square', 0.09), 95);
+      } catch (e) {}
+    }
+
+    function playHitConfirmSound(isKill = false) {
+      if (!state.audioEnabled || !state.audioCtx) return;
+      playTone(1650, 0.07, 'triangle', 0.18);
+      if (isKill) {
+        setTimeout(() => playTone(2200, 0.16, 'sine', 0.2), 75);
+      }
+    }
+
+    function playIncomingSnapSound() {
+      if (!state.audioEnabled || !state.audioCtx) return;
+      playTone(2400, 0.045, 'sawtooth', 0.07);
+    }
+
+    function playHeartbeatLubDub() {
+      if (!state.audioEnabled || !state.audioCtx || state.helmetEquipped) return;
+      playTone(58, 0.09, 'sine', 0.22);
+      setTimeout(() => playTone(48, 0.11, 'sine', 0.16), 140);
     }
 
     function toggleAudio() {
       initAudio();
       state.audioEnabled = !state.audioEnabled;
+      syncWindAudioGain();
       const btn = document.getElementById('btn-sound-toggle');
       if (state.audioEnabled) {
         btn.classList.add('active');
-        btn.innerText = '🔊 AUDIO [ON]';
-        playTone(880, 0.1, 'sine', 0.1);
+        btn.innerText = 'AUDIO: ON';
+        playTone(1040, 0.08, 'sine', 0.12);
       } else {
         btn.classList.remove('active');
-        btn.innerText = '🔇 AUDIO [MUTED]';
+        btn.innerText = 'AUDIO: OFF';
       }
     }
 
-    /* ===================================================
-       6. INTERACTION & MOUSE LOOK CONTROLS
-       =================================================== */
+    /* =====================================================================
+       6. TRUE 3D RAYCAST AIMING, LRF, BALLISTICS & TARGET DESIGNATION
+       ===================================================================== */
     container.addEventListener('mousemove', (e) => {
       const rect = container.getBoundingClientRect();
-      const normX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      const normY = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-      
-      state.mouse.targetX = normX;
-      state.mouse.targetY = normY;
-
-      // Update crosshair position in HUD mode
-      const crosshair = document.getElementById('smart-crosshair');
-      if (crosshair) {
-        crosshair.style.left = `${e.clientX - rect.left}px`;
-        crosshair.style.top = `${e.clientY - rect.top}px`;
-      }
+      state.mouse.screenX = e.clientX - rect.left;
+      state.mouse.screenY = e.clientY - rect.top;
+      state.mouse.x = (state.mouse.screenX / rect.width) * 2 - 1;
+      state.mouse.y = -(state.mouse.screenY / rect.height) * 2 + 1;
     });
 
-    container.addEventListener('click', (e) => {
-      if (state.helmetEquipped) {
-        fireWeapon();
-      } else {
-        // Prompt to wear helmet
+    // Prevent context menu so Right-Click designates targets or drops 3D waypoints
+    container.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      if (!state.helmetEquipped) {
         toggleHelmet();
+        return;
+      }
+      designateOrPingAtReticle();
+    });
+
+    container.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return; // Left-click only
+      if (!state.helmetEquipped) {
+        toggleHelmet();
+      } else {
+        fireWeapon();
       }
     });
 
+    // Optical Magnification via Mouse Wheel
+    container.addEventListener('wheel', (e) => {
+      if (!state.helmetEquipped) return;
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        if (state.zoom === 1.0) setZoomLevel(2.0);
+        else if (state.zoom === 2.0) setZoomLevel(4.0);
+      } else {
+        if (state.zoom === 4.0) setZoomLevel(2.0);
+        else if (state.zoom === 2.0) setZoomLevel(1.0);
+      }
+    }, { passive: false });
+
+    // Full Combat Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      const key = e.key.toLowerCase();
+      if (e.code === 'Space') {
+        e.preventDefault();
+        toggleHelmet();
+      } else if (key === '1') setVisionMode('thermal');
+      else if (key === '2') setVisionMode('whitehot');
+      else if (key === '3') setVisionMode('nvg');
+      else if (key === '4') setVisionMode('whitephosphor');
+      else if (key === '5') setVisionMode('fusion');
+      else if (key === '6') setVisionMode('colorstarlight');
+      else if (key === 'h') cycleDeclutterMode();
+      else if (key === 'v') triggerTerrainScan();
+      else if (key === 'g') designateOrPingAtReticle();
+      else if (key === 'r') reloadWeapon();
+      else if (key === 'z') {
+        const nextZoom = state.zoom === 1.0 ? 2.0 : (state.zoom === 2.0 ? 4.0 : 1.0);
+        setZoomLevel(nextZoom);
+      }
+    });
+
+    function setZoomLevel(zoomFactor, ev) {
+      if (ev) ev.stopPropagation();
+      state.zoom = zoomFactor;
+      state.targetFov = zoomFactor === 1.0 ? 65 : (zoomFactor === 2.0 ? 34 : 17);
+
+      document.querySelectorAll('.zoom-pill').forEach(el => el.classList.remove('active'));
+      const btnId = zoomFactor === 1.0 ? 'zoom-1' : (zoomFactor === 2.0 ? 'zoom-2' : 'zoom-4');
+      const btn = document.getElementById(btnId);
+      if (btn) btn.classList.add('active');
+
+      const vig = document.getElementById('optic-zoom-vignette');
+      if (vig) vig.style.opacity = zoomFactor > 1.0 ? '1' : '0';
+
+      playTone(750 + zoomFactor * 120, 0.06, 'sine', 0.08);
+    }
+
+    function reloadWeapon() {
+      if (state.isReloading || state.ammo === state.maxAmmo) return;
+      state.isReloading = true;
+      const ammoEl = document.getElementById('ammo-count');
+      if (ammoEl) {
+        ammoEl.style.color = '#ffb800';
+        ammoEl.innerText = 'RELOADING...';
+      }
+      playTone(420, 0.09, 'square', 0.12);
+      setTimeout(() => {
+        state.ammo = state.maxAmmo;
+        state.isReloading = false;
+        if (ammoEl) {
+          ammoEl.style.color = 'var(--friendly)';
+          ammoEl.innerText = `${state.ammo} / ${state.maxAmmo}`;
+        }
+        playTone(880, 0.11, 'triangle', 0.14);
+      }, 1100);
+    }
+
+    // Continuous Laser Rangefinder (LRF) Raycast under the Reticle
+    function updateLaserRangefinder() {
+      raycaster.setFromCamera(new THREE.Vector2(state.mouse.x, state.mouse.y), camera);
+
+      const activeHitboxes = hitboxMeshes.filter(hb => !hb.userData.targetData.isDead);
+      const hitList = raycaster.intersectObjects([...activeHitboxes, ...environmentColliders], false);
+
+      if (hitList.length > 0) {
+        state.lrfDistance = Math.min(299, Math.max(5, Math.round(hitList[0].distance)));
+        state.lrfHitPoint.copy(hitList[0].point);
+      } else {
+        state.lrfDistance = 185;
+      }
+
+      const lrfEl = document.getElementById('lrf-bottom-readout');
+      if (lrfEl) {
+        lrfEl.innerText = `${String(state.lrfDistance).padStart(3, '0')}m`;
+      }
+    }
+
+    // True 3D Raycast Firing & Target Neutralization
     function fireWeapon() {
+      if (state.isReloading) return;
       if (state.ammo <= 0) {
-        playTone(300, 0.08, 'square', 0.2); // Empty click
-        document.getElementById('ammo-count').innerText = 'RELOAD!';
-        setTimeout(() => {
-          state.ammo = 20;
-          document.getElementById('ammo-count').innerText = '20 / 20';
-          playTone(600, 0.15, 'triangle', 0.15);
-        }, 1500);
+        playTone(280, 0.08, 'square', 0.15);
+        reloadWeapon();
         return;
       }
 
       state.ammo--;
-      document.getElementById('ammo-count').innerText = `${state.ammo} / 20`;
+      const ammoEl = document.getElementById('ammo-count');
+      if (ammoEl) {
+        ammoEl.innerText = `${state.ammo} / ${state.maxAmmo}`;
+        if (state.ammo <= 5) ammoEl.style.color = '#ff2a4b';
+      }
+
       playGunshotSound();
+      state.recoilPitch += 0.018 / Math.sqrt(state.zoom);
 
-      // Muzzle flash light pulse
-      flashLight.intensity = 4.0;
-      setTimeout(() => flashLight.intensity = 0, 70);
+      // Muzzle flash light
+      flashLight.intensity = 4.2;
+      setTimeout(() => { flashLight.intensity = 0; }, 60);
 
-      // Create Tracer Line in 3D
-      const origin = new THREE.Vector3(0.3, 1.4, -0.6);
-      
-      // Calculate ray direction based on camera look
-      const rayDir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).normalize();
-      const endPoint = origin.clone().add(rayDir.clone().multiplyScalar(120));
+      // Raycast from exact smart reticle coordinates
+      raycaster.setFromCamera(new THREE.Vector2(state.mouse.x, state.mouse.y), camera);
+      const muzzleOrigin = camera.position.clone().add(new THREE.Vector3(0.22, -0.22, -0.5).applyQuaternion(camera.quaternion));
 
-      // Check hit against hostile targets
+      const activeHitboxes = hitboxMeshes.filter(hb => !hb.userData.targetData.isDead);
+      const hits = raycaster.intersectObjects([...activeHitboxes, ...environmentColliders], false);
+
+      let endPoint = muzzleOrigin.clone().add(raycaster.ray.direction.clone().multiplyScalar(160));
       let hitTarget = null;
-      for (const t of state.targets) {
-        if (t.isDead || t.type !== 'hostile') continue;
-        const distToRay = t.pos.clone().sub(origin).cross(rayDir).length();
-        if (distToRay < 2.5) {
-          hitTarget = t;
-          endPoint.copy(t.pos);
-          break;
+
+      if (hits.length > 0) {
+        endPoint.copy(hits[0].point);
+        if (hits[0].object.userData && hits[0].object.userData.targetData) {
+          hitTarget = hits[0].object.userData.targetData;
         }
       }
 
+      // Fallback proximity check in screen space if user clicked right on a target icon
+      if (!hitTarget) {
+        for (const t of state.targets) {
+          if (t.isDead || !t.inFront) continue;
+          const distPx = Math.hypot(t.screenX - state.mouse.screenX, t.screenY - state.mouse.screenY);
+          if (distPx < 36) {
+            hitTarget = t;
+            endPoint.copy(t.pos).add(new THREE.Vector3(0, 1.3, 0));
+            break;
+          }
+        }
+      }
+
+      // Spawn 3D/2D Ballistic Tracer
       state.tracers.push({
-        start: origin,
-        end: endPoint,
+        start: muzzleOrigin,
+        end: endPoint.clone(),
         life: 1.0,
-        color: state.visionMode === 'thermal' ? 0xffea00 : 0x00f0ff
+        isHostileTracer: false
       });
 
-      // Target damage reaction
+      // Spawn Impact Particles
+      spawnImpactParticles(endPoint, hitTarget ? 0xff3a1e : 0xaee8ff);
+
       if (hitTarget) {
-        hitTarget.hp -= 50;
-        playTone(1400, 0.1, 'sine', 0.2);
+        if (hitTarget.type === 'friendly') {
+          showEngagementBanner('WARNING: BLUE FORCE CHECK FIRE (HAWKEYE-2)');
+          playTone(220, 0.25, 'sawtooth', 0.2);
+          return;
+        }
+
+        hitTarget.hp = Math.max(0, hitTarget.hp - 50);
+        state.hitMarkerLife = 1.0;
+
         if (hitTarget.hp <= 0) {
           hitTarget.isDead = true;
           hitTarget.status = 'NEUTRALIZED';
-          showEngagementBanner(`CONFIRMED HIT: ${hitTarget.name} ELIMINATED!`);
+          state.hitMarkerKill = true;
+          playHitConfirmSound(true);
+          neutralizeSoldierRig(hitTarget.id);
+          showEngagementBanner(`CONFIRMED EFFECT: ${hitTarget.code} ${hitTarget.name} NEUTRALIZED`);
           updateTelemetryCounts();
         } else {
-          showEngagementBanner(`TARGET HIT: ${hitTarget.name} - ${hitTarget.hp}% HP`);
+          state.hitMarkerKill = false;
+          playHitConfirmSound(false);
+          hitTarget.status = 'TAKING FIRE';
+          showEngagementBanner(`BALLISTIC IMPACT: ${hitTarget.code} (${hitTarget.hp}% INTEGRITY)`);
         }
       }
+    }
+
+    function spawnImpactParticles(worldPoint, hexColor) {
+      for (let i = 0; i < 8; i++) {
+        state.impactParticles.push({
+          pos: worldPoint.clone(),
+          vel: new THREE.Vector3(
+            (Math.random() - 0.5) * 4.5,
+            1.5 + Math.random() * 3.5,
+            (Math.random() - 0.5) * 4.5
+          ),
+          life: 1.0,
+          color: hexColor
+        });
+      }
+    }
+
+    function neutralizeSoldierRig(targetId) {
+      const sm = soldierMeshes.find(s => s.data.id === targetId);
+      if (!sm) return;
+      if (sm.laser) sm.laser.visible = false;
+
+      // Dim thermal signature to represent cooling neutralized contact
+      sm.mesh.traverse(child => {
+        if (child.isMesh && child !== sm.hitbox) {
+          child.material = new THREE.MeshBasicMaterial({ color: 0x2a323d });
+        }
+      });
+
+      // Auto-shift UAV designation to next living hostile
+      if (state.designatedTargetId === targetId) {
+        const nextHostile = state.targets.find(t => t.type === 'hostile' && !t.isDead);
+        state.designatedTargetId = nextHostile ? nextHostile.id : null;
+      }
+    }
+
+    // 3D Target Designation OR Tactical Waypoint Ping (RMB or [G])
+    function designateOrPingAtReticle() {
+      // 1. Check if reticle is near any target in screen space
+      let closestTarget = null;
+      let minDist = 75;
+      for (const t of state.targets) {
+        if (t.isDead || !t.inFront) continue;
+        const d = Math.hypot(t.screenX - state.mouse.screenX, t.screenY - state.mouse.screenY);
+        if (d < minDist) {
+          minDist = d;
+          closestTarget = t;
+        }
+      }
+
+      if (closestTarget) {
+        state.designatedTargetId = closestTarget.id;
+        playTone(1480, 0.08, 'sine', 0.15);
+        setTimeout(() => playTone(1880, 0.12, 'sine', 0.15), 90);
+        document.getElementById('designated-telem').innerText = `${closestTarget.code} [${closestTarget.range}M]`;
+        document.getElementById('uav-target-label').innerText = `TRK: ${closestTarget.code} LOCKED`;
+        showEngagementBanner(`LATTICE DESIGNATION LOCKED: ${closestTarget.name} TASKED TO GHOST-4 UAV`);
+        return;
+      }
+
+      // 2. Otherwise raycast onto the 3D Himalayan terrain to drop a Tactical Waypoint
+      raycaster.setFromCamera(new THREE.Vector2(state.mouse.x, state.mouse.y), camera);
+      const terrainHits = raycaster.intersectObject(terrain, false);
+      if (terrainHits.length > 0) {
+        const pt = terrainHits[0].point;
+        const dist = Math.round(camera.position.distanceTo(pt));
+        const mgrsEast = 8800 + Math.round(pt.x * 10);
+        const mgrsNorth = 1900 + Math.round(Math.abs(pt.z) * 10);
+        const mgrsStr = `43R EP ${mgrsEast} ${mgrsNorth}`;
+
+        state.waypoint = {
+          pos: pt.clone(),
+          mgrs: mgrsStr,
+          dist
+        };
+
+        waypointGroup.position.copy(pt);
+        waypointGroup.visible = true;
+
+        const wpBlip = document.getElementById('blip-waypoint');
+        if (wpBlip) wpBlip.style.display = 'block';
+
+        document.getElementById('waypoint-telem').innerText = `WP-1 [${dist}M]`;
+        playTone(1120, 0.1, 'triangle', 0.14);
+        showEngagementBanner(`3D WAYPOINT DROPPED: ${mgrsStr} (RNG: ${dist}m)`);
+      }
+    }
+
+    // Lattice Terrain Scan Pulse ([V] Key or Button)
+    function triggerTerrainScan() {
+      if (!state.helmetEquipped) {
+        toggleHelmet();
+      }
+      state.scanPulse.active = true;
+      state.scanPulse.radius = 2;
+      scanRingMesh.visible = true;
+      scanRingMat.opacity = 0.85;
+      topoWireMat.opacity = 0.28;
+
+      playTone(520, 0.18, 'sine', 0.14);
+      setTimeout(() => playTone(780, 0.28, 'sine', 0.12), 140);
+      showEngagementBanner('LATTICE TERRAIN LIDAR PULSE: ILLUMINATING OCCLUDED CONTACTS');
+    }
+
+    function resetScenario() {
+      spawnTargetsFromTemplate();
+      state.ammo = state.maxAmmo;
+      document.getElementById('ammo-count').innerText = `${state.ammo} / ${state.maxAmmo}`;
+      document.getElementById('ammo-count').style.color = 'var(--friendly)';
+      state.waypoint = null;
+      waypointGroup.visible = false;
+      const wpBlip = document.getElementById('blip-waypoint');
+      if (wpBlip) wpBlip.style.display = 'none';
+      document.getElementById('waypoint-telem').innerText = 'STANDBY';
+      playTone(960, 0.12, 'triangle', 0.14);
+      showEngagementBanner('PATROL SCENARIO RESET: 3 HOSTILE PLA CONTACTS RE-SEEDED');
+    }
+
+    /* =====================================================================
+       7. ANTI-CONGESTION HUD DECLUTTER & HELMET MASTER CONTROLS
+       ===================================================================== */
+    function cycleDeclutterMode() {
+      state.declutterMode = (state.declutterMode + 1) % 3;
+      const btn = document.getElementById('btn-declutter');
+      const badge = document.getElementById('declutter-badge');
+      const peripherals = document.querySelectorAll('.hud-peripheral-panel');
+      const compass = document.getElementById('hud-compass');
+      const weaponPanel = document.getElementById('hud-weapon-panel');
+
+      if (state.declutterMode === 0) {
+        btn.innerText = 'HUD: FULL [H]';
+        badge.innerText = 'HUD: FULL C2';
+        peripherals.forEach(p => { p.style.opacity = '1'; p.style.pointerEvents = 'auto'; });
+        compass.style.opacity = '1';
+        weaponPanel.style.opacity = '1';
+      } else if (state.declutterMode === 1) {
+        btn.innerText = 'HUD: MINIMAL [H]';
+        badge.innerText = 'HUD: COMBAT MINIMAL';
+        peripherals.forEach(p => { p.style.opacity = '0'; p.style.pointerEvents = 'none'; });
+        compass.style.opacity = '1';
+        weaponPanel.style.opacity = '0.85';
+      } else {
+        btn.innerText = 'HUD: OPTIC [H]';
+        badge.innerText = 'HUD: OPTIC ONLY';
+        peripherals.forEach(p => { p.style.opacity = '0'; p.style.pointerEvents = 'none'; });
+        compass.style.opacity = '0';
+        weaponPanel.style.opacity = '0';
+      }
+      playTone(820, 0.06, 'sine', 0.1);
+    }
+
+    function toggleUAVAngle(ev) {
+      if (ev) ev.stopPropagation();
+      state.uavChaseMode = !state.uavChaseMode;
+      const btn = document.getElementById('btn-uav-cam');
+      if (btn) {
+        btn.innerText = state.uavChaseMode ? 'CAM: CHASE FLIR' : 'CAM: TOP-DOWN';
+      }
+      playTone(1180, 0.06, 'sine', 0.1);
+    }
+
+    function toggleSkeletalAI() {
+      state.skeletalAI = !state.skeletalAI;
+      const btn = document.getElementById('btn-skeletal-toggle');
+      if (state.skeletalAI) btn.classList.add('active');
+      else btn.classList.remove('active');
+      playTone(900, 0.05, 'sine', 0.1);
     }
 
     function showEngagementBanner(text) {
       const banner = document.getElementById('engagement-banner');
       banner.innerText = text;
       banner.style.display = 'block';
-      setTimeout(() => { banner.style.display = 'none'; }, 2600);
+      clearTimeout(banner._timer);
+      banner._timer = setTimeout(() => { banner.style.display = 'none'; }, 2400);
     }
 
     function updateTelemetryCounts() {
       const activeHostiles = state.targets.filter(t => t.type === 'hostile' && !t.isDead).length;
-      document.getElementById('target-count-telem').innerText = `${activeHostiles} HOSTILE PLA │ 1 FRIENDLY`;
-      document.getElementById('threat-text').innerText = activeHostiles > 0 
-        ? `HOSTILE PLA SQUAD DETECTED (${activeHostiles} CONTACTS)` 
-        : 'SECTOR CLEAR: ALL HOSTILE THREATS ELIMINATED';
-      
-      if (activeHostiles === 0) {
-        document.getElementById('threat-indicator').classList.remove('danger');
-      }
+      document.getElementById('target-count-telem').innerText = `${activeHostiles} HOSTILE │ 1 BLUFOR`;
+      document.getElementById('threat-text').innerText = activeHostiles > 0
+        ? `CONTACTS: ${activeHostiles} HOSTILE PLA`
+        : 'SECTOR CLEAR: ALL HOSTILES NEUTRALIZED';
+
+      const dot = document.getElementById('threat-indicator');
+      if (activeHostiles === 0) dot.classList.remove('danger');
+      else dot.classList.add('danger');
     }
 
-    /* ===================================================
-       7. HELMET EQUIP TOGGLE & BOOT SEQUENCE
-       =================================================== */
     function toggleHelmet() {
       initAudio();
       state.helmetEquipped = !state.helmetEquipped;
+      syncWindAudioGain();
 
       const masterBtn = document.getElementById('btn-helmet-master');
       const btnText = document.getElementById('helmet-btn-text');
@@ -1642,130 +2116,94 @@
       const bootOverlay = document.getElementById('boot-sequence-overlay');
 
       if (state.helmetEquipped) {
-        // Play high-tech boot transition
         bootOverlay.style.opacity = '1';
         bootOverlay.style.pointerEvents = 'auto';
         document.getElementById('boot-text').innerText = 'INITIALIZING EAGLEEYE MULTI-SPECTRAL VISOR...';
-
         playHelmetBootSound();
 
         setTimeout(() => {
-          document.getElementById('boot-text').innerText = 'LATTICE AI SYNCHRONIZING THREAT VECTORS...';
-        }, 350);
+          document.getElementById('boot-text').innerText = 'LATTICE AI SYNCHRONIZING BALLISTIC & THREAT VECTORS...';
+        }, 280);
 
         setTimeout(() => {
           bootOverlay.style.opacity = '0';
           bootOverlay.style.pointerEvents = 'none';
-
           nakedOverlay.style.display = 'none';
           hudOverlay.style.display = 'block';
           hudOverlay.style.opacity = '1';
-
           masterBtn.classList.add('active');
-          btnText.innerText = 'REMOVE HELMET (NAKED EYE)';
-
-          // Apply current vision mode
-          setVisionMode(state.visionMode);
-        }, 750);
-
+          btnText.innerText = 'REMOVE HELMET [SPACE]';
+          setVisionMode(state.visionMode, true);
+        }, 620);
       } else {
-        // Remove helmet back to blind ambient
-        playTone(350, 0.25, 'sawtooth', 0.1);
+        playTone(340, 0.2, 'sawtooth', 0.1);
+        setZoomLevel(1.0);
         hudOverlay.style.opacity = '0';
-        setTimeout(() => { hudOverlay.style.display = 'none'; }, 300);
-
+        setTimeout(() => { hudOverlay.style.display = 'none'; }, 280);
         nakedOverlay.style.display = 'block';
         masterBtn.classList.remove('active');
         btnText.innerText = 'EQUIP EAGLEEYE HELMET';
-
-        // Reset materials to pitch-dark ambient
         resetToNaturalNight();
       }
     }
 
-    /* ===================================================
-       8. MULTI-SPECTRAL VISION MODES & PALETTES
-       =================================================== */
-    function setVisionMode(mode) {
+    /* =====================================================================
+       8. 6 MULTI-SPECTRAL SENSOR MODES
+       ===================================================================== */
+    function setVisionMode(mode, silent = false) {
       state.visionMode = mode;
-
-      // Update button styles
       document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
       const activeBtn = document.getElementById(`mode-${mode}`);
       if (activeBtn) activeBtn.classList.add('active');
 
       if (!state.helmetEquipped) return;
+      if (!silent) playTone(940, 0.06, 'sine', 0.1);
 
-      playTone(900, 0.08, 'sine', 0.12);
-
-      // Vision mode adaptations
       if (mode === 'thermal') {
-        // High-contrast Ironbow: Dark blue/purple terrain, blazing yellow/white/orange heat bodies
         scene.fog.color.setHex(0x0a0520);
-        scene.fog.density = 0.009;
+        scene.fog.density = 0.0085;
         renderer.toneMappingExposure = 1.3;
         terrainMat.color.setHex(0x0e1026);
-        pineTrees.forEach(t => t.traverse(c => {
-          if (c.isMesh) c.material.color.setHex(0x0b152b);
-        }));
-        applySoldierThermalColor(0xff4400, 0xffff66);
-      } 
-      else if (mode === 'whitehot') {
-        // Crisp military FLIR White-Hot: Charcoal environment, pure glowing white humans
-        scene.fog.color.setHex(0x111111);
-        scene.fog.density = 0.008;
-        renderer.toneMappingExposure = 1.1;
-        terrainMat.color.setHex(0x222222);
-        pineTrees.forEach(t => t.traverse(c => {
-          if (c.isMesh) c.material.color.setHex(0x1a1a1a);
-        }));
+        pineTrees.forEach(t => t.traverse(c => { if (c.isMesh) c.material.color.setHex(0x0b152b); }));
+        applySoldierThermalColor(0xff4400, 0xffea55);
+      } else if (mode === 'whitehot') {
+        scene.fog.color.setHex(0x101010);
+        scene.fog.density = 0.0075;
+        renderer.toneMappingExposure = 1.15;
+        terrainMat.color.setHex(0x1f1f1f);
+        pineTrees.forEach(t => t.traverse(c => { if (c.isMesh) c.material.color.setHex(0x171717); }));
         applySoldierThermalColor(0xffffff, 0xffffff);
-      } 
-      else if (mode === 'nvg') {
-        // Gen-3 Classic Emerald Green Night Vision
+      } else if (mode === 'nvg') {
         scene.fog.color.setHex(0x031808);
-        scene.fog.density = 0.01;
+        scene.fog.density = 0.009;
         renderer.toneMappingExposure = 1.6;
         terrainMat.color.setHex(0x0a3314);
-        pineTrees.forEach(t => t.traverse(c => {
-          if (c.isMesh) c.material.color.setHex(0x0e471c);
-        }));
-        applySoldierUniformColor(0x1aff55);
-      } 
-      else if (mode === 'whitephosphor') {
-        // Tier-1 White Phosphor (cool blue-grey high dynamic range)
-        scene.fog.color.setHex(0x0a1622);
-        scene.fog.density = 0.008;
-        renderer.toneMappingExposure = 1.4;
-        terrainMat.color.setHex(0x192b3a);
-        pineTrees.forEach(t => t.traverse(c => {
-          if (c.isMesh) c.material.color.setHex(0x223c52);
-        }));
-        applySoldierUniformColor(0xaee0ff);
-      } 
-      else if (mode === 'fusion') {
-        // Anduril Lattice AI Sensor Fusion: High-visibility wireframe edge contours + thermal highlights
+        pineTrees.forEach(t => t.traverse(c => { if (c.isMesh) c.material.color.setHex(0x0e471c); }));
+        applySoldierUniformColor(0x22ff66);
+      } else if (mode === 'whitephosphor') {
+        scene.fog.color.setHex(0x081520);
+        scene.fog.density = 0.0075;
+        renderer.toneMappingExposure = 1.45;
+        terrainMat.color.setHex(0x182b3a);
+        pineTrees.forEach(t => t.traverse(c => { if (c.isMesh) c.material.color.setHex(0x213c50); }));
+        applySoldierUniformColor(0xb5e6ff);
+      } else if (mode === 'fusion') {
         scene.fog.color.setHex(0x030d17);
-        scene.fog.density = 0.007;
-        renderer.toneMappingExposure = 1.2;
+        scene.fog.density = 0.0065;
+        renderer.toneMappingExposure = 1.25;
         terrainMat.color.setHex(0x081e2b);
-        pineTrees.forEach(t => t.traverse(c => {
-          if (c.isMesh) c.material.color.setHex(0x062838);
-        }));
-        applySoldierThermalColor(0x00f0ff, 0xff3355);
-      } 
-      else if (mode === 'colorstarlight') {
-        // Ultra-low-light full color enhancement (visible Himalayan mountain colors at night)
+        pineTrees.forEach(t => t.traverse(c => { if (c.isMesh) c.material.color.setHex(0x062838); }));
+        applySoldierThermalColor(0x00f0ff, 0xff2a4b);
+      } else if (mode === 'colorstarlight') {
         scene.fog.color.setHex(0x091421);
         scene.fog.density = 0.006;
-        renderer.toneMappingExposure = 1.5;
+        renderer.toneMappingExposure = 1.55;
         terrainMat.color.setHex(0x1d2e3d);
-        pineTrees.forEach(t => t.traverse(c => {
-          if (c.isMesh) c.material.color.setHex(0x113324);
-        }));
+        pineTrees.forEach(t => t.traverse(c => { if (c.isMesh) c.material.color.setHex(0x113324); }));
         soldierMeshes.forEach(sm => {
+          if (sm.data.isDead) return;
           sm.mesh.traverse(child => {
-            if (child.isMesh && child.userData.originalMat) {
+            if (child.isMesh && child !== sm.hitbox && child.userData.originalMat) {
               child.material = child.userData.originalMat;
             }
           });
@@ -1773,13 +2211,14 @@
       }
     }
 
-    function applySoldierThermalColor(baseColor, coreColor) {
+    function applySoldierThermalColor(baseColor, hostileColor) {
       soldierMeshes.forEach(sm => {
+        if (sm.data.isDead) return;
         const isHostile = sm.data.type === 'hostile';
         sm.mesh.traverse(child => {
-          if (child.isMesh) {
+          if (child.isMesh && child !== sm.hitbox) {
             child.material = new THREE.MeshBasicMaterial({
-              color: isHostile ? coreColor : 0x00ffa3,
+              color: isHostile ? hostileColor : 0x00ffa3,
               wireframe: state.visionMode === 'fusion'
             });
           }
@@ -1789,12 +2228,10 @@
 
     function applySoldierUniformColor(colorHex) {
       soldierMeshes.forEach(sm => {
+        if (sm.data.isDead) return;
         sm.mesh.traverse(child => {
-          if (child.isMesh) {
-            child.material = new THREE.MeshStandardMaterial({
-              color: colorHex,
-              roughness: 0.5
-            });
+          if (child.isMesh && child !== sm.hitbox) {
+            child.material = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.45 });
           }
         });
       });
@@ -1803,228 +2240,306 @@
     function resetToNaturalNight() {
       scene.fog.color.setHex(0x02070c);
       scene.fog.density = 0.015;
-      renderer.toneMappingExposure = 0.7;
+      renderer.toneMappingExposure = 0.65;
       terrainMat.color.setHex(0x111c24);
-      pineTrees.forEach(t => t.traverse(c => {
-        if (c.isMesh) c.material.color.setHex(0x091e17);
-      }));
+      pineTrees.forEach(t => t.traverse(c => { if (c.isMesh) c.material.color.setHex(0x091e17); }));
       soldierMeshes.forEach(sm => {
+        if (sm.data.isDead) return;
         sm.mesh.traverse(child => {
-          if (child.isMesh && child.userData.originalMat) {
+          if (child.isMesh && child !== sm.hitbox && child.userData.originalMat) {
             child.material = child.userData.originalMat;
           }
         });
       });
     }
 
-    function toggleDronePIP() {
-      state.dronePIP = !state.dronePIP;
-      const box = document.getElementById('drone-pip');
-      const btn = document.getElementById('btn-drone-toggle');
-      if (state.dronePIP) {
-        box.style.display = 'flex';
-        btn.classList.add('active');
-      } else {
-        box.style.display = 'none';
-        btn.classList.remove('active');
-      }
-    }
-
-    function toggleSkeletalAI() {
-      state.skeletalAI = !state.skeletalAI;
-      const btn = document.getElementById('btn-skeletal-toggle');
-      if (state.skeletalAI) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-    }
-
-    /* ===================================================
-       9. DYNAMIC HUD CANVAS RENDER LOOP (2D Overlays)
-       =================================================== */
+    /* =====================================================================
+       9. ANTI-CONGESTION 2D TACTICAL HUD RENDERER (MIL-STD-2525D + GAZE EXPAND)
+       ===================================================================== */
     function renderTactical2DHUD() {
-      hudCtx.clearRect(0, 0, hudCanvas.width, hudCanvas.height);
+      const W = hudCanvas.width;
+      const H = hudCanvas.height;
+      hudCtx.clearRect(0, 0, W, H);
 
-      if (!state.helmetEquipped) return;
+      // Even in Naked Eye mode, draw a subtle dim crosshair so user can see where mouse is
+      if (!state.helmetEquipped) {
+        hudCtx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+        hudCtx.lineWidth = 1;
+        hudCtx.beginPath();
+        hudCtx.arc(state.mouse.screenX, state.mouse.screenY, 8, 0, Math.PI * 2);
+        hudCtx.stroke();
+        return;
+      }
 
-      const halfW = hudCanvas.width / 2;
-      const halfH = hudCanvas.height / 2;
+      const halfW = W / 2;
+      const halfH = H / 2;
 
-      // Project soldiers to screen space & draw AR Target Tags & Skeletal AI
+      // 1. Project & Render 3D Tactical Waypoint if active
+      if (state.waypoint && state.declutterMode < 2) {
+        const wpProj = state.waypoint.pos.clone().add(new THREE.Vector3(0, 2.2, 0)).project(camera);
+        if (wpProj.z < 1.0) {
+          const wx = (wpProj.x * halfW) + halfW;
+          const wy = -(wpProj.y * halfH) + halfH;
+          const dist = Math.round(camera.position.distanceTo(state.waypoint.pos));
+
+          hudCtx.save();
+          hudCtx.strokeStyle = '#ffd000';
+          hudCtx.fillStyle = '#ffd000';
+          hudCtx.lineWidth = 1.5;
+
+          // Diamond Waypoint Marker
+          hudCtx.beginPath();
+          hudCtx.moveTo(wx, wy - 9);
+          hudCtx.lineTo(wx + 7, wy);
+          hudCtx.lineTo(wx, wy + 9);
+          hudCtx.lineTo(wx - 7, wy);
+          hudCtx.closePath();
+          hudCtx.stroke();
+
+          hudCtx.font = 'bold 10px "Share Tech Mono", monospace';
+          hudCtx.fillText(`WP-1 [${dist}m]`, wx + 11, wy + 3);
+          if (state.declutterMode === 0) {
+            hudCtx.font = '9px "Share Tech Mono", monospace';
+            hudCtx.fillStyle = '#fff3b0';
+            hudCtx.fillText(state.waypoint.mgrs, wx + 11, wy + 14);
+          }
+          hudCtx.restore();
+        }
+      }
+
+      // 2. Project Soldiers & Render MIL-STD-2525D Symbols + Gaze-Activated Telemetry
       soldierMeshes.forEach(sm => {
         const t = sm.data;
-        if (t.isDead) return;
+        const headWorld = sm.mesh.position.clone().add(new THREE.Vector3(0, t.isDead ? 0.35 : 1.75, 0));
+        const proj = headWorld.clone().project(camera);
 
-        // Position of head in 3D
-        const soldierWorldPos = sm.mesh.position.clone().add(new THREE.Vector3(0, 1.8, 0));
-        const proj = soldierWorldPos.clone().project(camera);
+        t.inFront = proj.z < 1.0;
+        const sx = (proj.x * halfW) + halfW;
+        const sy = -(proj.y * halfH) + halfH;
+        t.screenX = sx;
+        t.screenY = sy;
 
-        // Check if in front of camera
-        if (proj.z < 1.0) {
-          const screenX = (proj.x * halfW) + halfW;
-          const screenY = -(proj.y * halfH) + halfH;
-          t.screenX = screenX;
-          t.screenY = screenY;
+        const onScreen = t.inFront && sx > 20 && sx < W - 20 && sy > 20 && sy < H - 20;
 
-          // Only render if reasonably on screen
-          if (screenX > 40 && screenX < hudCanvas.width - 40 && screenY > 40 && screenY < hudCanvas.height - 40) {
-            drawTargetARBoundingBox(t, screenX, screenY);
-            if (state.skeletalAI) {
-              drawSkeletalJoints(t, screenX, screenY);
+        if (onScreen && state.declutterMode < 2) {
+          if (t.isDead) {
+            // Subtle dim X marker for neutralized contact
+            if (state.declutterMode === 0) {
+              hudCtx.save();
+              hudCtx.strokeStyle = 'rgba(130, 150, 165, 0.55)';
+              hudCtx.lineWidth = 1.5;
+              hudCtx.beginPath();
+              hudCtx.moveTo(sx - 5, sy - 5);
+              hudCtx.lineTo(sx + 5, sy + 5);
+              hudCtx.moveTo(sx + 5, sy - 5);
+              hudCtx.lineTo(sx - 5, sy + 5);
+              hudCtx.stroke();
+              hudCtx.fillStyle = 'rgba(130, 150, 165, 0.7)';
+              hudCtx.font = '9px "Share Tech Mono", monospace';
+              hudCtx.fillText(`${t.code} KIA`, sx + 8, sy + 3);
+              hudCtx.restore();
             }
+          } else {
+            // Determine if operator's reticle is gazing at this target (< 92px) or if it's Designated
+            const distToReticle = Math.hypot(sx - state.mouse.screenX, sy - state.mouse.screenY);
+            const isGazed = distToReticle < 92;
+            const isDesignated = state.designatedTargetId === t.id;
+            const scanHighlighted = state.scanPulse.active && Math.abs(t.range - state.scanPulse.radius) < 28;
+
+            if (state.skeletalAI && state.declutterMode === 0 && (isGazed || isDesignated || scanHighlighted)) {
+              drawSkeletalJoints(t, sx, sy);
+            }
+
+            drawMilStdSymbolAndCard(t, sx, sy, isGazed, isDesignated, scanHighlighted);
           }
+        } else if (!t.isDead && t.type === 'hostile' && state.declutterMode < 2) {
+          // 3. Off-Screen Directional Threat Chevron around the central reticle
+          drawOffscreenThreatChevron(t, halfW, halfH);
         }
       });
 
-      // Draw Ballistic Tracers on HUD canvas
-      for (let i = state.tracers.length - 1; i >= 0; i--) {
-        const tracer = state.tracers[i];
-        tracer.life -= 0.05;
+      // 4. Render 3D Ballistic Tracers & Impact Sparks in 2D HUD space
+      renderTracersAndImpacts(halfW, halfH);
 
-        const p1 = tracer.start.clone().project(camera);
-        const p2 = tracer.end.clone().project(camera);
-
-        if (p1.z < 1.0 && p2.z < 1.0) {
-          const x1 = (p1.x * halfW) + halfW;
-          const y1 = -(p1.y * halfH) + halfH;
-          const x2 = (p2.x * halfW) + halfW;
-          const y2 = -(p2.y * halfH) + halfH;
-
-          hudCtx.strokeStyle = `rgba(255, 230, 80, ${tracer.life})`;
-          hudCtx.lineWidth = 3 * tracer.life;
-          hudCtx.beginPath();
-          hudCtx.moveTo(x1, y1);
-          hudCtx.lineTo(x2, y2);
-          hudCtx.stroke();
-
-          // Spark particle on impact
-          hudCtx.fillStyle = `rgba(255, 80, 40, ${tracer.life})`;
-          hudCtx.beginPath();
-          hudCtx.arc(x2, y2, 4 * tracer.life, 0, Math.PI * 2);
-          hudCtx.fill();
-        }
-
-        if (tracer.life <= 0) {
-          state.tracers.splice(i, 1);
-        }
-      }
+      // 5. Render Smart Ballistic Reticle, LRF & Computed Impact Point (CIP)
+      renderSmartBallisticReticle();
     }
 
-    function drawTargetARBoundingBox(target, x, y) {
+    function drawMilStdSymbolAndCard(target, x, y, isGazed, isDesignated, scanHighlighted) {
       const isHostile = target.type === 'hostile';
-      const color = isHostile ? '#ff2a4b' : '#00ffa3';
-      const glowColor = isHostile ? 'rgba(255, 42, 75, 0.4)' : 'rgba(0, 255, 163, 0.4)';
-
-      // Scale box with range
-      const boxW = Math.max(28, 1400 / target.range);
-      const boxH = Math.max(50, 2600 / target.range);
+      const primaryColor = isHostile ? '#ff2a4b' : '#00ffa3';
+      const boxH = Math.max(38, (2200 / Math.max(18, target.range)) * Math.sqrt(state.zoom));
+      const boxW = boxH * 0.52;
 
       hudCtx.save();
-      hudCtx.strokeStyle = color;
-      hudCtx.lineWidth = 1.5;
-      hudCtx.shadowColor = glowColor;
-      hudCtx.shadowBlur = 8;
 
-      // Corner brackets (Anduril EagleEye Style)
-      const bracketLen = Math.min(10, boxW * 0.3);
+      // Vertical Sky-Beam for Designated Target
+      if (isDesignated) {
+        const grad = hudCtx.createLinearGradient(x, y - boxH * 0.6, x, Math.max(0, y - 180));
+        grad.addColorStop(0, 'rgba(255, 184, 0, 0.75)');
+        grad.addColorStop(1, 'rgba(255, 184, 0, 0.0)');
+        hudCtx.strokeStyle = grad;
+        hudCtx.lineWidth = 1.5;
+        hudCtx.setLineDash([4, 3]);
+        hudCtx.beginPath();
+        hudCtx.moveTo(x, y - boxH * 0.6);
+        hudCtx.lineTo(x, Math.max(0, y - 180));
+        hudCtx.stroke();
+        hudCtx.setLineDash([]);
+      }
+
+      // MIL-STD-2525D Core Icon above/centered on contact
+      const iconY = y - boxH * 0.55;
+      hudCtx.strokeStyle = scanHighlighted ? '#00f0ff' : primaryColor;
+      hudCtx.lineWidth = isGazed || isDesignated ? 2 : 1.5;
+
+      if (isHostile) {
+        // Hostile Red Diamond
+        const r = isGazed || isDesignated ? 8 : 6;
+        hudCtx.beginPath();
+        hudCtx.moveTo(x, iconY - r);
+        hudCtx.lineTo(x + r, iconY);
+        hudCtx.lineTo(x, iconY + r);
+        hudCtx.lineTo(x - r, iconY);
+        hudCtx.closePath();
+        hudCtx.stroke();
+
+        // Center dot
+        hudCtx.fillStyle = primaryColor;
+        hudCtx.fillRect(x - 1, iconY - 1, 2, 2);
+      } else {
+        // Friendly Blue Force Circle
+        hudCtx.beginPath();
+        hudCtx.arc(x, iconY, 6, 0, Math.PI * 2);
+        hudCtx.stroke();
+      }
+
+      // Micro-label ALWAYS visible (Anti-clutter: tiny, zero opaque box unless gazed)
+      if (!isGazed && !isDesignated) {
+        hudCtx.font = 'bold 9.5px "Share Tech Mono", monospace';
+        hudCtx.fillStyle = primaryColor;
+        hudCtx.fillText(`${target.code} ${target.range}m`, x + 10, iconY + 3);
+        hudCtx.restore();
+        return;
+      }
+
+      // Corner Brackets around target body when Gazed or Designated
       const left = x - boxW / 2;
       const right = x + boxW / 2;
       const top = y - boxH / 2;
       const bottom = y + boxH / 2;
+      const bLen = Math.min(9, boxW * 0.32);
 
-      // Top-Left
+      hudCtx.strokeStyle = isDesignated ? '#ffb800' : primaryColor;
+      hudCtx.lineWidth = 1.5;
+
       hudCtx.beginPath();
-      hudCtx.moveTo(left, top + bracketLen);
-      hudCtx.lineTo(left, top);
-      hudCtx.lineTo(left + bracketLen, top);
+      // TL
+      hudCtx.moveTo(left, top + bLen); hudCtx.lineTo(left, top); hudCtx.lineTo(left + bLen, top);
+      // TR
+      hudCtx.moveTo(right - bLen, top); hudCtx.lineTo(right, top); hudCtx.lineTo(right, top + bLen);
+      // BL
+      hudCtx.moveTo(left, bottom - bLen); hudCtx.lineTo(left, bottom); hudCtx.lineTo(left + bLen, bottom);
+      // BR
+      hudCtx.moveTo(right - bLen, bottom); hudCtx.lineTo(right, bottom); hudCtx.lineTo(right, bottom - bLen);
       hudCtx.stroke();
 
-      // Top-Right
+      // Expanded Gaze Telemetry Card (Only in FULL C2 mode, or compact tag in MINIMAL)
+      if (state.declutterMode === 0) {
+        const cardX = right + 10;
+        const cardY = top - 4;
+        const cardW = 138;
+        const cardH = 54;
+
+        hudCtx.fillStyle = 'rgba(3, 10, 16, 0.84)';
+        hudCtx.fillRect(cardX, cardY, cardW, cardH);
+        hudCtx.strokeStyle = isDesignated ? '#ffb800' : primaryColor;
+        hudCtx.lineWidth = 1;
+        hudCtx.strokeRect(cardX, cardY, cardW, cardH);
+
+        // Header
+        hudCtx.fillStyle = isDesignated ? '#ffb800' : primaryColor;
+        hudCtx.font = 'bold 9.5px Orbitron, sans-serif';
+        hudCtx.fillText(`${target.code}: ${target.name}`, cardX + 6, cardY + 12);
+
+        // Telemetry lines
+        hudCtx.fillStyle = '#d2ecf7';
+        hudCtx.font = '9px "Share Tech Mono", monospace';
+        hudCtx.fillText(`RNG: ${target.range}m │ IR: ${target.heat}`, cardX + 6, cardY + 24);
+        hudCtx.fillText(`WPN: ${target.weapon}`, cardX + 6, cardY + 35);
+
+        // HP bar
+        hudCtx.fillStyle = 'rgba(255,255,255,0.15)';
+        hudCtx.fillRect(cardX + 6, cardY + 41, cardW - 12, 5);
+        hudCtx.fillStyle = isHostile ? '#ff2a4b' : '#00ffa3';
+        hudCtx.fillRect(cardX + 6, cardY + 41, ((cardW - 12) * target.hp) / 100, 5);
+      } else {
+        hudCtx.font = 'bold 10px "Share Tech Mono", monospace';
+        hudCtx.fillStyle = isDesignated ? '#ffb800' : primaryColor;
+        hudCtx.fillText(`${target.code} [${target.range}m] ${target.hp}%`, right + 6, top + 10);
+      }
+
+      hudCtx.restore();
+    }
+
+    function drawOffscreenThreatChevron(target, centerX, centerY) {
+      // Compute relative bearing from camera look direction to hostile
+      const toTarget = target.pos.clone().sub(camera.position);
+      const angleToTarget = Math.atan2(-toTarget.x, -toTarget.z);
+      const relativeAngle = angleToTarget - camera.rotation.y;
+
+      const radius = 125;
+      const cx = state.mouse.screenX + Math.sin(-relativeAngle) * radius;
+      const cy = state.mouse.screenY - Math.cos(relativeAngle) * (radius * 0.65);
+
+      const angle = Math.atan2(cy - state.mouse.screenY, cx - state.mouse.screenX);
+
+      hudCtx.save();
+      hudCtx.translate(cx, cy);
+      hudCtx.rotate(angle);
+
+      const isDesignated = state.designatedTargetId === target.id;
+      hudCtx.strokeStyle = isDesignated ? '#ffb800' : 'rgba(255, 42, 75, 0.85)';
+      hudCtx.lineWidth = 2;
+
       hudCtx.beginPath();
-      hudCtx.moveTo(right - bracketLen, top);
-      hudCtx.lineTo(right, top);
-      hudCtx.lineTo(right, top + bracketLen);
+      hudCtx.moveTo(-6, -7);
+      hudCtx.lineTo(4, 0);
+      hudCtx.lineTo(-6, 7);
       hudCtx.stroke();
-
-      // Bottom-Left
-      hudCtx.beginPath();
-      hudCtx.moveTo(left, bottom - bracketLen);
-      hudCtx.lineTo(left, bottom);
-      hudCtx.lineTo(left + bracketLen, bottom);
-      hudCtx.stroke();
-
-      // Bottom-Right
-      hudCtx.beginPath();
-      hudCtx.moveTo(right - bracketLen, bottom);
-      hudCtx.lineTo(right, bottom);
-      hudCtx.lineTo(right, bottom - bracketLen);
-      hudCtx.stroke();
-
-      // Tactical Tag Card
-      const tagX = right + 6;
-      const tagY = top;
-
-      hudCtx.fillStyle = 'rgba(4, 12, 18, 0.85)';
-      hudCtx.fillRect(tagX, tagY, 130, 48);
-      hudCtx.strokeStyle = color;
-      hudCtx.lineWidth = 1;
-      hudCtx.strokeRect(tagX, tagY, 130, 48);
-
-      hudCtx.shadowBlur = 0;
-      hudCtx.fillStyle = color;
-      hudCtx.font = 'bold 10px Orbitron, sans-serif';
-      hudCtx.fillText(target.name, tagX + 6, tagY + 13);
-
-      hudCtx.fillStyle = '#cde7f0';
-      hudCtx.font = '9px "Share Tech Mono", monospace';
-      hudCtx.fillText(`FLIR: ${target.heat} │ RNG: ${target.range}m`, tagX + 6, tagY + 26);
-      hudCtx.fillText(`STATUS: ${target.status}`, tagX + 6, tagY + 38);
-
-      // Connecting lead line
-      hudCtx.strokeStyle = color;
-      hudCtx.setLineDash([2, 2]);
-      hudCtx.beginPath();
-      hudCtx.moveTo(right, top);
-      hudCtx.lineTo(tagX, tagY);
-      hudCtx.stroke();
-      hudCtx.setLineDash([]);
 
       hudCtx.restore();
     }
 
     function drawSkeletalJoints(target, x, y) {
-      // Procedural AI Joint Wireframe tracking human pose
-      const color = target.type === 'hostile' ? 'rgba(255, 60, 80, 0.7)' : 'rgba(0, 255, 180, 0.7)';
-      const h = Math.max(50, 2600 / target.range);
-      const w = h * 0.35;
+      const color = target.type === 'hostile' ? 'rgba(255, 70, 95, 0.72)' : 'rgba(0, 255, 180, 0.72)';
+      const h = Math.max(42, (2200 / Math.max(18, target.range)) * Math.sqrt(state.zoom));
+      const w = h * 0.34;
 
-      const head = { x: x, y: y - h * 0.35 };
-      const chest = { x: x, y: y - h * 0.1 };
-      const leftShoulder = { x: x - w * 0.7, y: y - h * 0.15 };
-      const rightShoulder = { x: x + w * 0.7, y: y - h * 0.15 };
-      const leftElbow = { x: x - w * 0.9, y: y + h * 0.05 + Math.sin(target.walkCycle) * 3 };
-      const rightElbow = { x: x + w * 0.6, y: y + h * 0.02 };
-      const pelvis = { x: x, y: y + h * 0.15 };
-      const leftKnee = { x: x - w * 0.4, y: y + h * 0.35 + Math.sin(target.walkCycle) * 4 };
-      const rightKnee = { x: x + w * 0.4, y: y + h * 0.35 - Math.sin(target.walkCycle) * 4 };
-      const leftFoot = { x: x - w * 0.4, y: y + h * 0.5 };
-      const rightFoot = { x: x + w * 0.4, y: y + h * 0.5 };
+      const head = { x, y: y - h * 0.35 };
+      const chest = { x, y: y - h * 0.12 };
+      const lShoulder = { x: x - w * 0.65, y: y - h * 0.14 };
+      const rShoulder = { x: x + w * 0.65, y: y - h * 0.14 };
+      const lElbow = { x: x - w * 0.8, y: y + h * 0.04 + Math.sin(target.walkCycle) * 2.5 };
+      const rElbow = { x: x + w * 0.55, y: y + h * 0.02 };
+      const pelvis = { x, y: y + h * 0.14 };
+      const lKnee = { x: x - w * 0.38, y: y + h * 0.33 + Math.sin(target.walkCycle) * 3.5 };
+      const rKnee = { x: x + w * 0.38, y: y + h * 0.33 - Math.sin(target.walkCycle) * 3.5 };
+      const lFoot = { x: x - w * 0.38, y: y + h * 0.48 };
+      const rFoot = { x: x + w * 0.38, y: y + h * 0.48 };
 
       hudCtx.save();
       hudCtx.strokeStyle = color;
-      hudCtx.lineWidth = 1;
+      hudCtx.lineWidth = 1.1;
 
-      // Draw bone linkages
       const bones = [
         [head, chest],
-        [chest, leftShoulder], [leftShoulder, leftElbow],
-        [chest, rightShoulder], [rightShoulder, rightElbow],
+        [chest, lShoulder], [lShoulder, lElbow],
+        [chest, rShoulder], [rShoulder, rElbow],
         [chest, pelvis],
-        [pelvis, leftKnee], [leftKnee, leftFoot],
-        [pelvis, rightKnee], [rightKnee, rightFoot]
+        [pelvis, lKnee], [lKnee, lFoot],
+        [pelvis, rKnee], [rKnee, rFoot]
       ];
-
       bones.forEach(([p1, p2]) => {
         hudCtx.beginPath();
         hudCtx.moveTo(p1.x, p1.y);
@@ -2032,103 +2547,372 @@
         hudCtx.stroke();
       });
 
-      // Joint nodes
-      hudCtx.fillStyle = '#ffffff';
-      [head, chest, leftShoulder, rightShoulder, leftElbow, rightElbow, pelvis, leftKnee, rightKnee].forEach(pt => {
-        hudCtx.beginPath();
-        hudCtx.arc(pt.x, pt.y, 1.8, 0, Math.PI * 2);
-        hudCtx.fill();
+      hudCtx.fillStyle = '#fff';
+      [head, chest, lShoulder, rShoulder, pelvis, lKnee, rKnee].forEach(pt => {
+        hudCtx.fillRect(pt.x - 1.2, pt.y - 1.2, 2.4, 2.4);
       });
+      hudCtx.restore();
+    }
+
+    function renderTracersAndImpacts(halfW, halfH) {
+      // Ballistic Tracers
+      for (let i = state.tracers.length - 1; i >= 0; i--) {
+        const tr = state.tracers[i];
+        tr.life -= 0.07;
+
+        const p1 = tr.start.clone().project(camera);
+        const p2 = tr.end.clone().project(camera);
+
+        if (p1.z < 1.0 && p2.z < 1.0) {
+          const x1 = (p1.x * halfW) + halfW;
+          const y1 = -(p1.y * halfH) + halfH;
+          const x2 = (p2.x * halfW) + halfW;
+          const y2 = -(p2.y * halfH) + halfH;
+
+          hudCtx.save();
+          hudCtx.strokeStyle = tr.isHostileTracer
+            ? `rgba(255, 45, 70, ${tr.life})`
+            : `rgba(255, 235, 90, ${tr.life})`;
+          hudCtx.lineWidth = (tr.isHostileTracer ? 2.0 : 2.8) * tr.life;
+          hudCtx.beginPath();
+          hudCtx.moveTo(x1, y1);
+          hudCtx.lineTo(x2, y2);
+          hudCtx.stroke();
+          hudCtx.restore();
+        }
+        if (tr.life <= 0) state.tracers.splice(i, 1);
+      }
+
+      // 3D Impact Snow & Thermal Sparks
+      for (let i = state.impactParticles.length - 1; i >= 0; i--) {
+        const pt = state.impactParticles[i];
+        pt.pos.addScaledVector(pt.vel, 0.03);
+        pt.vel.y -= 0.15;
+        pt.life -= 0.05;
+
+        const proj = pt.pos.clone().project(camera);
+        if (proj.z < 1.0) {
+          const sx = (proj.x * halfW) + halfW;
+          const sy = -(proj.y * halfH) + halfH;
+          hudCtx.fillStyle = pt.color === 0xff3a1e
+            ? `rgba(255, 140, 40, ${pt.life})`
+            : `rgba(200, 240, 255, ${pt.life})`;
+          hudCtx.beginPath();
+          hudCtx.arc(sx, sy, 2.2 * pt.life, 0, Math.PI * 2);
+          hudCtx.fill();
+        }
+        if (pt.life <= 0) state.impactParticles.splice(i, 1);
+      }
+    }
+
+    function renderSmartBallisticReticle() {
+      const rx = state.mouse.screenX;
+      const ry = state.mouse.screenY;
+
+      hudCtx.save();
+
+      // Incoming Hostile Suppression Warning Arc
+      if (state.incomingSuppressionAlert > 0) {
+        state.incomingSuppressionAlert = Math.max(0, state.incomingSuppressionAlert - 0.03);
+        hudCtx.strokeStyle = `rgba(255, 42, 75, ${state.incomingSuppressionAlert * 0.85})`;
+        hudCtx.lineWidth = 3;
+        hudCtx.beginPath();
+        hudCtx.arc(rx, ry, 54, -Math.PI * 0.75, -Math.PI * 0.25);
+        hudCtx.stroke();
+      }
+
+      // Outer Ballistic Ring
+      const ringRadius = state.zoom > 1.0 ? 34 : 24;
+      hudCtx.strokeStyle = 'rgba(0, 240, 255, 0.55)';
+      hudCtx.lineWidth = 1.2;
+      hudCtx.beginPath();
+      hudCtx.arc(rx, ry, ringRadius, 0, Math.PI * 2);
+      hudCtx.stroke();
+
+      // Precision Crosshair Ticks
+      hudCtx.strokeStyle = 'rgba(255, 184, 0, 0.85)';
+      hudCtx.beginPath();
+      hudCtx.moveTo(rx - ringRadius - 7, ry); hudCtx.lineTo(rx - ringRadius + 4, ry);
+      hudCtx.moveTo(rx + ringRadius - 4, ry); hudCtx.lineTo(rx + ringRadius + 7, ry);
+      hudCtx.moveTo(rx, ry - ringRadius - 7); hudCtx.lineTo(rx, ry - ringRadius + 4);
+      hudCtx.moveTo(rx, ry + ringRadius - 4); hudCtx.lineTo(rx, ry + ringRadius + 7);
+      hudCtx.stroke();
+
+      // Center Primary Aim Dot
+      hudCtx.fillStyle = '#00f0ff';
+      hudCtx.beginPath();
+      hudCtx.arc(rx, ry, 2, 0, Math.PI * 2);
+      hudCtx.fill();
+
+      // Ballistic Drop Compensator (BDC) & Wind Drift Computed Impact Point (CIP)
+      // Shifts dynamically with Laser Rangefinder distance and zoom magnification
+      const dropPx = Math.min(38, (state.lrfDistance / 100) * 9.5 * state.zoom);
+      const windPx = Math.min(18, (state.lrfDistance / 100) * 3.8 * state.zoom);
+      const cipX = rx + windPx;
+      const cipY = ry + dropPx;
+
+      if (state.declutterMode < 2 && state.lrfDistance > 25) {
+        // Dashed ballistic drop ladder line
+        hudCtx.strokeStyle = 'rgba(255, 184, 0, 0.45)';
+        hudCtx.setLineDash([2, 2]);
+        hudCtx.beginPath();
+        hudCtx.moveTo(rx, ry);
+        hudCtx.lineTo(cipX, cipY);
+        hudCtx.stroke();
+        hudCtx.setLineDash([]);
+
+        // Amber Computed Impact Point (CIP) Pip
+        hudCtx.fillStyle = '#ffb800';
+        hudCtx.beginPath();
+        hudCtx.arc(cipX, cipY, 2.5, 0, Math.PI * 2);
+        hudCtx.fill();
+      }
+
+      // Hit Confirmation X-Marker on Reticle
+      if (state.hitMarkerLife > 0) {
+        state.hitMarkerLife = Math.max(0, state.hitMarkerLife - 0.06);
+        hudCtx.strokeStyle = state.hitMarkerKill
+          ? `rgba(255, 42, 75, ${state.hitMarkerLife})`
+          : `rgba(255, 255, 255, ${state.hitMarkerLife})`;
+        hudCtx.lineWidth = 2;
+        const hm = 9;
+        hudCtx.beginPath();
+        hudCtx.moveTo(rx - hm, ry - hm); hudCtx.lineTo(rx - 3, ry - 3);
+        hudCtx.moveTo(rx + hm, ry - hm); hudCtx.lineTo(rx + 3, ry - 3);
+        hudCtx.moveTo(rx - hm, ry + hm); hudCtx.lineTo(rx - 3, ry + 3);
+        hudCtx.moveTo(rx + hm, ry + hm); hudCtx.lineTo(rx + 3, ry + 3);
+        hudCtx.stroke();
+      }
+
+      // Micro Ballistic LRF Readout next to Reticle (Hidden in OPTIC ONLY)
+      if (state.declutterMode < 2) {
+        const elevMil = ((state.lrfDistance / 100) * 1.15).toFixed(1);
+        hudCtx.fillStyle = 'rgba(0, 240, 255, 0.9)';
+        hudCtx.font = '9.5px "Share Tech Mono", monospace';
+        hudCtx.fillText(`LRF ${String(state.lrfDistance).padStart(3, '0')}m`, rx + ringRadius + 10, ry - 4);
+        hudCtx.fillStyle = 'rgba(255, 184, 0, 0.85)';
+        hudCtx.fillText(`+${elevMil} MIL │ ${state.zoom.toFixed(1)}X`, rx + ringRadius + 10, ry + 8);
+      }
 
       hudCtx.restore();
     }
 
-    /* ===================================================
-       10. MAIN ANIMATION & SIMULATION LOOP
-       =================================================== */
+    /* =====================================================================
+       10. HOSTILE & FRIENDLY AI COMBAT LOOP + MAIN SIMULATION TICK
+       ===================================================================== */
     let lastTime = performance.now();
+
+    function updateAICombatAndPatrol(now, delta) {
+      soldierMeshes.forEach(sm => {
+        const t = sm.data;
+
+        if (t.isDead) {
+          // Smooth neutralization collapse animation onto the snow
+          if (t.fallProgress < 1.0) {
+            t.fallProgress = Math.min(1.0, t.fallProgress + delta * 3.2);
+            sm.mesh.rotation.x = -t.fallProgress * (Math.PI / 2);
+            sm.mesh.position.y = getTerrainHeight(sm.mesh.position.x, sm.mesh.position.z) + 0.15;
+          }
+          return;
+        }
+
+        // Patrol movement & synchronized logical position (Fixes original static t.pos bug!)
+        t.walkCycle += delta * 2.6;
+        const offsetX = Math.sin(t.walkCycle * t.patrolSpeed) * t.patrolAmp;
+        sm.mesh.position.x = t.baseX + offsetX;
+        sm.mesh.position.z = t.baseZ + Math.cos(t.walkCycle * t.patrolSpeed * 0.5) * 1.8;
+        sm.mesh.position.y = getTerrainHeight(sm.mesh.position.x, sm.mesh.position.z);
+
+        // Keep t.pos & range strictly synchronized with 3D mesh
+        t.pos.copy(sm.mesh.position);
+        t.range = Math.round(camera.position.distanceTo(t.pos));
+
+        // Subtle leg stride animation
+        sm.leftLeg.rotation.x = Math.sin(t.walkCycle * 2) * 0.25;
+        sm.rightLeg.rotation.x = -Math.sin(t.walkCycle * 2) * 0.25;
+
+        // Periodic AI Tracer Fire
+        if (now > t.nextFireTime) {
+          t.nextFireTime = now + 2600 + Math.random() * 3800;
+
+          if (t.type === 'hostile') {
+            // Hostile fires toward operator or friendly Para SF
+            const muzzle = t.pos.clone().add(new THREE.Vector3(0, 1.4, 0.8));
+            const targetPt = Math.random() < 0.65
+              ? new THREE.Vector3((Math.random() - 0.5) * 6, 1.5 + (Math.random() - 0.5) * 2, -2)
+              : state.targets[3].pos.clone().add(new THREE.Vector3((Math.random() - 0.5) * 3, 1.2, 0));
+
+            state.tracers.push({
+              start: muzzle,
+              end: targetPt,
+              life: 1.0,
+              isHostileTracer: true
+            });
+            state.incomingSuppressionAlert = 1.0;
+            playIncomingSnapSound();
+          } else if (t.type === 'friendly') {
+            // Friendly Para SF fires overwatch burst at Designated hostile
+            const desHostile = state.targets.find(h => h.id === state.designatedTargetId && !h.isDead && h.type === 'hostile');
+            if (desHostile) {
+              const muzzle = t.pos.clone().add(new THREE.Vector3(0.3, 1.4, -0.5));
+              const endPt = desHostile.pos.clone().add(new THREE.Vector3((Math.random() - 0.5) * 1.5, 1.2, 0));
+              state.tracers.push({
+                start: muzzle,
+                end: endPt,
+                life: 1.0,
+                isHostileTracer: false
+              });
+            }
+          }
+        }
+      });
+    }
+
+    function updateGhost4UAVCamera(now) {
+      if (!state.dronePIP || state.declutterMode > 0) return;
+
+      let focusPos = new THREE.Vector3(5, 0, -60);
+      const desTarget = state.targets.find(t => t.id === state.designatedTargetId && !t.isDead);
+      if (desTarget) {
+        focusPos.copy(desTarget.pos);
+      }
+
+      const orbitAngle = now * 0.00045;
+      if (state.uavChaseMode) {
+        droneCamera.position.set(
+          focusPos.x + Math.sin(orbitAngle) * 26,
+          focusPos.y + 18,
+          focusPos.z + Math.cos(orbitAngle) * 26
+        );
+      } else {
+        droneCamera.position.set(
+          focusPos.x + Math.sin(orbitAngle) * 4,
+          focusPos.y + 52,
+          focusPos.z + Math.cos(orbitAngle) * 4
+        );
+      }
+      droneCamera.lookAt(focusPos.x, focusPos.y + 1.0, focusPos.z);
+      droneRenderer.render(scene, droneCamera);
+    }
+
+    function updateMinimapRadar() {
+      if (state.declutterMode > 0) return;
+      const mapRadius = 68; // px radius inside 154px circle
+      const centerPx = 77;
+
+      // Rotate FOV Cone with camera yaw
+      const fovCone = document.getElementById('minimap-fov-cone');
+      if (fovCone) {
+        const deg = -(camera.rotation.y * 180) / Math.PI;
+        fovCone.style.transform = `translate(-50%, -50%) rotate(${deg}deg)`;
+      }
+
+      state.targets.forEach(t => {
+        const blip = document.getElementById(`blip-${t.id}`);
+        if (!blip) return;
+        if (t.isDead) {
+          blip.style.opacity = '0.18';
+          blip.style.background = '#556';
+          blip.style.boxShadow = 'none';
+        } else {
+          blip.style.opacity = '1';
+          blip.style.background = t.type === 'hostile' ? 'var(--hostile)' : 'var(--friendly)';
+          const relX = Math.max(-mapRadius, Math.min(mapRadius, (t.pos.x / 110) * mapRadius));
+          const relZ = Math.max(-mapRadius, Math.min(mapRadius, (t.pos.z / 110) * mapRadius));
+          blip.style.left = `${centerPx + relX}px`;
+          blip.style.top = `${centerPx + relZ}px`;
+        }
+      });
+
+      if (state.waypoint) {
+        const wpBlip = document.getElementById('blip-waypoint');
+        if (wpBlip) {
+          const relX = Math.max(-mapRadius, Math.min(mapRadius, (state.waypoint.pos.x / 110) * mapRadius));
+          const relZ = Math.max(-mapRadius, Math.min(mapRadius, (state.waypoint.pos.z / 110) * mapRadius));
+          wpBlip.style.left = `${centerPx + relX}px`;
+          wpBlip.style.top = `${centerPx + relZ}px`;
+        }
+      }
+    }
 
     function animate() {
       requestAnimationFrame(animate);
 
       const now = performance.now();
-      const delta = (now - lastTime) / 1000;
+      const delta = Math.min(0.1, (now - lastTime) / 1000);
       lastTime = now;
 
-      // Smooth camera look with mouse target
-      state.lookYaw += (state.mouse.targetX * 0.4 - state.lookYaw) * 0.08;
-      state.lookPitch += (state.mouse.targetY * 0.25 - state.lookPitch) * 0.08;
+      // Smooth Optical Zoom FOV Interpolation
+      state.currentFov += (state.targetFov - state.currentFov) * 0.14;
+      if (Math.abs(camera.fov - state.currentFov) > 0.05) {
+        camera.fov = state.currentFov;
+        camera.updateProjectionMatrix();
+      }
+
+      // Smooth Camera Look with Zoom-Scaled Sensitivity & Recoil Recovery
+      const sens = 1 / Math.sqrt(state.zoom);
+      state.recoilPitch *= 0.84;
+      state.lookYaw += (state.mouse.x * 0.42 * sens - state.lookYaw) * 0.09;
+      state.lookPitch += (state.mouse.y * 0.25 * sens - state.lookPitch) * 0.09;
 
       camera.rotation.order = 'YXZ';
       camera.rotation.y = -state.lookYaw;
-      camera.rotation.x = state.lookPitch;
+      camera.rotation.x = state.lookPitch + state.recoilPitch;
 
-      // Update Compass Reading
-      let degrees = Math.round(((camera.rotation.y * 180 / Math.PI) + 360) % 360);
+      // Update Compass Heading Readout
+      const degrees = Math.round((((342 - (camera.rotation.y * 180) / Math.PI) % 360) + 360) % 360);
       const headingEl = document.getElementById('heading-display');
       if (headingEl) {
-        headingEl.innerText = `${String(degrees).padStart(3, '0')}° COMPASS │ ELEV: 16,420 FT`;
+        headingEl.innerText = `${String(degrees).padStart(3, '0')}° AZIMUTH │ MGRS 43R EP 8842 1920`;
       }
 
-      // Animate Snow Flurries
+      // Unprotected Naked-Eye Panic Heartbeat Audio
+      if (!state.helmetEquipped && state.audioEnabled && now - state.lastHeartbeat > 1100) {
+        state.lastHeartbeat = now;
+        playHeartbeatLubDub();
+      }
+
+      // Animate Blizzard Snow Particles
       const pos = snowGeo.attributes.position.array;
       for (let i = 0; i < snowCount; i++) {
         pos[i * 3] += snowVel[i].x;
         pos[i * 3 + 1] += snowVel[i].y;
         pos[i * 3 + 2] += snowVel[i].z;
-
         if (pos[i * 3 + 1] < 0) {
-          pos[i * 3 + 1] = 40;
+          pos[i * 3 + 1] = 42;
           pos[i * 3] = (Math.random() - 0.5) * 160;
         }
       }
       snowGeo.attributes.position.needsUpdate = true;
 
-      // Animate Soldier Patrol Walks
-      soldierMeshes.forEach(sm => {
-        const t = sm.data;
-        if (!t.isDead && t.type === 'hostile') {
-          t.walkCycle += delta * 2.5;
-          // Subtly patrol back and forth in tree cover
-          sm.mesh.position.x += Math.sin(t.walkCycle * 0.4) * 0.03;
-          sm.mesh.position.y = getTerrainHeight(sm.mesh.position.x, sm.mesh.position.z);
+      // Animate Lattice Terrain Scan Pulse Wave
+      if (state.scanPulse.active) {
+        state.scanPulse.radius += delta * 75;
+        scanRingMesh.scale.set(state.scanPulse.radius, state.scanPulse.radius, 1);
+        const progress = state.scanPulse.radius / state.scanPulse.maxRadius;
+        scanRingMat.opacity = Math.max(0, (1 - progress) * 0.85);
+        topoWireMat.opacity = Math.max(0, (1 - progress) * 0.28);
+
+        if (state.scanPulse.radius >= state.scanPulse.maxRadius) {
+          state.scanPulse.active = false;
+          scanRingMesh.visible = false;
+          topoWireMat.opacity = 0;
         }
-      });
-
-      // Update Minimap Blips
-      state.targets.forEach((t, idx) => {
-        const blip = document.getElementById(t.type === 'friendly' ? 'blip-f1' : `blip-e${idx + 1}`);
-        if (blip) {
-          if (t.isDead) {
-            blip.style.opacity = '0.2';
-            blip.style.background = '#666';
-          } else {
-            // Map 3D coordinates into radar circular space
-            const mapRadius = 75; // px from center
-            const relX = (t.pos.x / 140) * mapRadius;
-            const relZ = (t.pos.z / 140) * mapRadius;
-            blip.style.left = `${90 + relX}px`;
-            blip.style.top = `${90 + relZ}px`;
-          }
-        }
-      });
-
-      // Render 3D Scene
-      renderer.render(scene, camera);
-
-      // Render Drone PIP if enabled
-      if (state.dronePIP) {
-        droneRenderer.render(scene, droneCamera);
       }
 
-      // Render 2D Tactical HUD
+      // Update AI Patrols, LRF Raycaster, Minimap & Renders
+      updateAICombatAndPatrol(now, delta);
+      updateLaserRangefinder();
+      updateMinimapRadar();
+
+      renderer.render(scene, camera);
+      updateGhost4UAVCamera(now);
       renderTactical2DHUD();
     }
 
-    animate();
-
-    // Default start in naked eye mode to demonstrate contrast
-    // User clicks button to equip helmet and see dramatic transformation
+    window.onload = function () {
+      animate();
+    };
   </script>
 </body>
 </html>
