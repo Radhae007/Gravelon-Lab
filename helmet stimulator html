@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NETRA-X Tactical Helmet POV Simulator (Indian Army)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      background: #05070a;
+      font-family: 'Courier New', Courier, monospace;
+      color: #00ffcc;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #viewport {
+      position: relative;
+      width: 1000px;
+      height: 600px;
+      border: 2px solid #1a3a40;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #020608;
+      box-shadow: 0 0 50px rgba(0, 255, 204, 0.15);
+    }
+
+    /* Canvas for terrain & particles */
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Phase 1: Without Helmet (Fog & Panic) */
+    .unprotected-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle, rgba(10,20,30,0.5) 0%, rgba(2,4,8,0.95) 85%);
+      pointer-events: none;
+      display: none;
+    }
+    .dirt-goggles {
+      position: absolute;
+      inset: 0;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><circle cx="20" cy="30" r="15" fill="%23ffffff" opacity="0.04"/><circle cx="80" cy="70" r="25" fill="%23ffffff" opacity="0.03"/><path d="M10,80 Q30,60 50,85" stroke="%23ffffff" stroke-width="2" opacity="0.05" fill="none"/></svg>');
+      opacity: 0.8;
+      filter: blur(1px);
+    }
+    .panic-vignette {
+      position: absolute;
+      inset: 0;
+      box-shadow: inset 0 0 120px rgba(255, 0, 50, 0.4);
+      animation: heartbeat 1s infinite alternate ease-in-out;
+    }
+    @keyframes heartbeat {
+      0% { opacity: 0.3; transform: scale(1); }
+      100% { opacity: 0.85; transform: scale(1.02); }
+    }
+
+    /* Phase 2: High-Tech AR HUD */
+    .hud-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: none;
+      border: 1px solid rgba(0, 255, 204, 0.2);
+    }
+    .visor-curve {
+      position: absolute;
+      inset: 0;
+      box-shadow: inset 0 0 90px rgba(0, 20, 25, 0.9), inset 0 0 20px rgba(0, 255, 204, 0.3);
+      border-radius: 40px;
+    }
+    .top-bar {
+      position: absolute;
+      top: 15px;
+      left: 30px;
+      right: 30px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-shadow: 0 0 8px #00ffcc;
+    }
+    .minimap-box {
+      position: absolute;
+      top: 45px;
+      right: 30px;
+      width: 140px;
+      height: 140px;
+      border: 1px solid #00ffcc;
+      border-radius: 50%;
+      background: rgba(0, 25, 30, 0.6);
+      box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+      overflow: hidden;
+    }
+    .radar-sweep {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: conic-gradient(from 0deg, rgba(0, 255, 204, 0.4), transparent 90deg);
+      animation: sweep 3s linear infinite;
+      border-radius: 50%;
+    }
+    @keyframes sweep { 100% { transform: rotate(360deg); } }
+
+    /* Tactical Targets */
+    .target-tag {
+      position: absolute;
+      padding: 3px 6px;
+      font-size: 10px;
+      font-weight: bold;
+      border: 1px solid;
+      background: rgba(0,0,0,0.5);
+      border-radius: 3px;
+      transform: translate(-50%, -50%);
+      transition: all 0.2s;
+    }
+    .ally {
+      border-color: #00ffcc;
+      color: #00ffcc;
+      box-shadow: 0 0 8px #00ffcc;
+    }
+    .hostile {
+      border-color: #ff3344;
+      color: #ff3344;
+      box-shadow: 0 0 12px #ff3344;
+      animation: pulse-red 0.8s infinite alternate;
+    }
+    @keyframes pulse-red {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      100% { transform: translate(-50%, -50%) scale(1.08); }
+    }
+
+    /* Reticle & Ballistics */
+    .crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px;
+      height: 60px;
+      border: 1px dashed #ffaa00;
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+    }
+    .crosshair::before, .crosshair::after {
+      content: '';
+      position: absolute;
+      background: #ffaa00;
+    }
+    .crosshair::before { width: 12px; height: 2px; top: 29px; left: -18px; }
+    .crosshair::after { width: 2px; height: 12px; top: -18px; left: 29px; }
+
+    /* Controls */
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    button {
+      background: #072227;
+      color: #00ffcc;
+      border: 1px solid #00ffcc;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: bold;
+      font-size: 13px;
+      letter-spacing: 1px;
+      transition: 0.2s;
+    }
+    button:hover {
+      background: #00ffcc;
+      color: #011317;
+      box-shadow: 0 0 15px #00ffcc;
+    }
+    #status-display {
+      font-size: 13px;
+      letter-spacing: 1px;
+      min-width: 320px;
+      text-align: center;
+    }
+  </style>
+  <meta http-equiv="refresh" content="0; url=index.html">
+  <title>Redirecting to EagleEye XR Simulator...</title>
+  <script>window.location.href = "index.html";</script>
+</head>
+<body>
+
+  <div id="viewport">
+    <canvas id="viewCanvas"></canvas>
+
+    <!-- Phase 1 UI: Blind Fog & Overwhelmed -->
+    <div id="unprotectedLayer" class="unprotected-overlay">
+      <div class="dirt-goggles"></div>
+      <div class="panic-vignette"></div>
+      <div style="position: absolute; bottom: 25px; left: 25px; color: #ff3344; font-size: 12px;">
+        ⚠ SENSORY COLLAPSE: AMBUSH IN PROGRESS<br>
+        COMMS: JAMMED (STATIC)<br>
+        VISIBILITY: 8 METERS | THREAT VECTOR: UNKNOWN
+      </div>
+    </div>
+
+    <!-- Phase 2 UI: NETRA Smart Helmet AR HUD -->
+    <div id="hudLayer" class="hud-layer">
+      <div class="visor-curve"></div>
+      <div class="top-bar">
+        <span>NETRA-X TACTICAL SUITE v4.2 [INDIAN ARMY]</span>
+        <span>ELEV: 16,420 FT │ TEMP: -24°C │ SAT: SECURE-5</span>
+        <span>VITALS: 72 BPM [NOMINAL]</span>
+      </div>
+
+      <!-- Minimap with live radar -->
+      <div class="minimap-box">
+        <div class="radar-sweep"></div>
+        <div style="position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; background:#00ffcc; border-radius:50%; transform:translate(-50%,-50%);"></div>
+        <div style="position: absolute; top: 35%; left: 75%; width: 6px; height: 6px; background:#ff3344; border-radius:50%; box-shadow:0 0 5px #f00;"></div>
+        <div style="position: absolute; top: 25%; left: 40%; width: 6px; height: 6px; background:#ff3344; border-radius:50%; box-shadow:0 0 5px #f00;"></div>
+        <div style="position: absolute; top: 70%; left: 30%; width: 6px; height: 6px; background:#00ffcc; border-radius:50%;"></div>
+      </div>
+
+      <!-- Interactive Crosshair -->
+      <div class="crosshair"></div>
+
+      <!-- Target Overlays -->
+      <div class="target-tag hostile" style="top: 38%; left: 68%;">
+        HOSTILE PLA SQUAD [FLIR HEAT: 37°C]<br>RANGE: 168m │ WIND: 11kn NW
+      </div>
+
+      <div class="target-tag hostile" style="top: 28%; left: 35%;">
+        SNIPER NEST [ELEVATION +34°]<br>ACOUSTIC SIGNATURE VERIFIED
+      </div>
+
+      <div class="target-tag ally" style="top: 65%; left: 22%;">
+        ◆ ALLY: PARA-SF (HAWKEYE-2)<br>HEALTH: 100% │ MAG: FULL
+      </div>
+
+      <div style="position: absolute; bottom: 20px; left: 30px; font-size: 11px; line-height: 1.6;">
+        [WEAPON SYNC]: SIG-716 LINKED │ ZEROED: 200m<br>
+        [BALLISTICS]: TRAJECTORY COMPENSATED (+1.4 MOA)<br>
+        [STATUS]: TARGET SOLUTION COMPUTED
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="setPhase('unprotected')">1. BLIND AMBUSH (NO HELMET)</button>
+    <button onclick="rewindSequence()">2. REWIND & INITIALIZE</button>
+    <button onclick="setPhase('netra')">3. NETRA SMART HELMET (OVERMATCH)</button>
+  </div>
+  <div id="status-display" style="margin-top: 10px; color: #ffaa00;">MODE: SELECT A PHASE TO PREVIEW</div>
+
+  <script>
+    const canvas = document.getElementById('viewCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 1000;
+    canvas.height = 600;
+
+    let currentPhase = 'netra';
+    let particles = [];
+
+    for (let i = 0; i < 90; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: -3 - Math.random() * 5,
+        vy: 2 + Math.random() * 3,
+        size: Math.random() * 2.5
+      });
+    }
+
+    function draw() {
+      ctx.fillStyle = '#020608';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Render terrain contours
+      ctx.strokeStyle = currentPhase === 'netra' ? 'rgba(0, 255, 204, 0.25)' : 'rgba(50, 70, 80, 0.15)';
+      ctx.lineWidth = 1;
+
+      for (let y = 300; y < canvas.height; y += 35) {
+        ctx.beginPath();
+        for (let x = 0; x < canvas.width; x += 30) {
+          let elevation = Math.sin(x * 0.01 + y * 0.02) * 20 + (y - 300) * 0.8;
+          ctx.lineTo(x, canvas.height - elevation);
+        }
+        ctx.stroke();
+      }
+
+      // Ballistic projection line in NETRA mode
+      if (currentPhase === 'netra') {
+        ctx.beginPath();
+        ctx.setLineDash([6, 6]);
+        ctx.moveTo(500, 600);
+        ctx.lineTo(680, 228);
+        ctx.strokeStyle = 'rgba(255, 170, 0, 0.7)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Blizzard particles
+      ctx.fillStyle = currentPhase === 'netra' ? 'rgba(0, 255, 204, 0.4)' : '#ffffff';
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.y > canvas.height) p.y = 0;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      requestAnimationFrame(draw);
+    }
+    draw();
+
+    function setPhase(phase) {
+      currentPhase = phase;
+      const unp = document.getElementById('unprotectedLayer');
+      const hud = document.getElementById('hudLayer');
+      const status = document.getElementById('status-display');
+
+      if (phase === 'unprotected') {
+        unp.style.display = 'block';
+        hud.style.display = 'none';
+        status.innerText = 'STATUS: CHAOS, ZERO VISIBILITY, DISORIENTED & PINNED';
+        status.style.color = '#ff3344';
+      } else if (phase === 'netra') {
+        unp.style.display = 'none';
+        hud.style.display = 'block';
+        status.innerText = 'STATUS: NETRA-X ONLINE. 100% SITUATIONAL DOMINANCE.';
+        status.style.color = '#00ffcc';
+      }
+    }
+
+    function rewindSequence() {
+      const status = document.getElementById('status-display');
+      status.innerText = '<< REWINDING TEMPORAL LOGS... BOOTING NETRA HUD >>';
+      status.style.color = '#ffaa00';
+      document.getElementById('unprotectedLayer').style.display = 'block';
+      document.getElementById('hudLayer').style.display = 'none';
+
+      let flashCount = 0;
+      let interval = setInterval(() => {
+        flashCount++;
+        document.getElementById('viewport').style.filter = flashCount % 2 === 0 ? 'invert(1) blur(2px)' : 'none';
+        if (flashCount > 6) {
+          clearInterval(interval);
+          document.getElementById('viewport').style.filter = 'none';
+          setPhase('netra');
+        }
+      }, 150);
+    }
+
+    // Default start in NETRA mode
+    setPhase('netra');
+  </script>
+<body style="background:#04080d; color:#00f0ff; font-family:sans-serif; text-align:center; padding-top:20vh;">
+  <h2>Loading EagleEye XR Himalayan Tactical Simulator...</h2>
+  <p><a href="index.html" style="color:#00ffa3;">Click here if not redirected automatically</a></p>
+</body>
+</html>
